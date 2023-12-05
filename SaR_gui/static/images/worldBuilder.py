@@ -19,7 +19,6 @@ from agents1.TutorialAgent import TutorialAgent
 from agents1.PerformanceAgent import PerformanceAgent
 from agents1.TrustAgent import TrustAgent
 from agents1.WorkloadAgent import WorkloadAgent
-from agents1.TutorialAgent2 import TutorialAgent2
 from actions1.customActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
 from loggers.action_logger import ActionLogger
@@ -63,8 +62,7 @@ def add_agents(builder, condition, exp_version):
     sense_capability = SenseCapability({AgentBody: agent_sense_range,
                                         CollectableBlock: block_sense_range,
                                         None: other_sense_range,
-                                        ObstacleObject: 1,
-                                        SmokeObject: 1})
+                                        ObstacleObject: 1})
 
     for team in range(nr_teams):
         team_name = f"Team {team}"
@@ -80,13 +78,13 @@ def add_agents(builder, condition, exp_version):
             if exp_version=="experiment" and condition=="workload":
                 brain = WorkloadAgent(slowdown=8)
             if exp_version=="trial" and condition=="tutorial":
-                brain = TutorialAgent(slowdown=4)
+                brain = TutorialAgent(slowdown=8)
 
             if exp_version=="experiment":
                 loc = (22,11)
             else:
                 loc = (16,8)
-            builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+            builder.add_agent(loc, brain, team=team_name, name="RescueBot",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
 
         # Add human agents
@@ -150,25 +148,17 @@ def create_builder(exp_version, condition):
                     (13,13),(14,13),(15,13),(16,13),(17,13),(13,14),(13,15),(13,16),(14,16),(17,14),(17,15),(17,16),(16,16)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/roof-final5.svg")
 
-        builder.add_object((3,4), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
-        builder.add_object((9,3), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=5, weight=False)
-        builder.add_object((3,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=15, weight=False)
+        builder.add_object((3,4), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
+        builder.add_object((3,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=5, weight=False)
         #builder.add_object((2,9), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.25)
-        builder.add_object((9,4),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=200)
-        builder.add_object((3,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=400)
-        builder.add_object((3,16),'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg",visualize_size=3.5, percentage_lel=35, weight=False)
-        builder.add_object((9,16),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=0.75, percentage_lel=False, weight=100)
-        #builder.add_object((15,4),'debris',ObstacleObject,visualize_shape='img',img_name="/images/stones2.svg",visualize_size=1, percentage_lel=False, weight=75)
+        builder.add_object((9,4),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
+        builder.add_object((3,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=200)
+        builder.add_object((3,16),'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg",visualize_size=3.5, percentage_lel=5, weight=False)
+        builder.add_object((9,16),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=0.75, percentage_lel=False, weight=50)
         #builder.add_object((15,16),'stone',ObstacleObject,visualize_shape='img',img_name="/images/stone-small.svg",visualize_size=1.5)
-        builder.add_object((9,7),'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg",visualize_size=1.75, percentage_lel=7, weight=False)
-        for i in [(9,6),(9,5),(8,6),(8,5),(7,6),(7,5),(6,6),(6,5),(5,6),(5,5),(4,6),(4,5),(3,6),(2,6),(2,5),(1,6),(1,5),(3,3),(3,2),(2,2),(2,3),(4,3),(4,2),(3,14),(2,14),(4,14),
-            (2,9),(4,9),(8,2),(10,2),(10,5),(10,6),(11,5),(11,6),(1,17),(5,17),(6,17),(6,16),(6,15),(6,14),(6,13),(2,15),(4,15),(4,17)]:
-            builder.add_object(location=i,name='smoke',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        for i in [(8,8),(9,8),(10,8),(10,9),(9,9)]:
-            builder.add_object(location=i,name='smoke',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=1, hcn_ppm=1)
+        builder.add_object((9,7),'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg",visualize_size=1.75, percentage_lel=5, weight=False)
 
-
-        builder.add_object((9,2),'mildly injured elderly woman in area 2', callable_class=CollectableBlock, 
+        builder.add_object((8,2),'mildly injured elderly woman in area 2', callable_class=CollectableBlock, 
             visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
         builder.add_object((16,15),'mildly injured man in area 8', callable_class=CollectableBlock, 
             visualize_shape='img',img_name="/images/mildly injured man.svg")
@@ -220,13 +210,6 @@ class ObstacleObject(EnvObject):
         super().__init__(location, name, percentage_lel=percentage_lel, weight=weight, is_traversable=False, is_movable=True,
                          visualize_shape=visualize_shape,img_name=img_name,
                          visualize_size=visualize_size, class_callable=ObstacleObject,
-                         is_drop_zone=False, is_goal_block=False, is_collectable=False)
-
-class SmokeObject(EnvObject):
-    def __init__(self, location, name, co_ppm, hcn_ppm, visualize_shape, img_name, visualize_size):
-        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=False,
-                         visualize_shape=visualize_shape,img_name=img_name,
-                         visualize_size=visualize_size, class_callable=SmokeObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
 class GhostBlock(EnvObject):
@@ -375,7 +358,6 @@ class CollectionGoal(WorldGoal):
                         self.__score+=6
                     if 'mild' in blocks[0].properties['img_name'][8:-4]:
                         self.__score+=3
-                    
                 # if there is no block, reset its tick to None
 
                 elif len(blocks) == 0:
@@ -402,7 +384,7 @@ class CollectionGoal(WorldGoal):
                 zone_satisfied = False
             # update our satisfied boolean
             is_satisfied = is_satisfied and zone_satisfied
-        agent = grid_world.registered_agents['brutus']
+        agent = grid_world.registered_agents['rescuebot']
         agent.change_property('score',self.__score)
 
         return is_satisfied, progress

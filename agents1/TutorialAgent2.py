@@ -38,7 +38,7 @@ class Phase(enum.Enum):
     REMOVE_OBSTACLE_IF_NEEDED=28,
     ENTER_ROOM=29
     
-class TutorialAgent(BW4TBrain):
+class TutorialAgent2(BW4TBrain):
     def __init__(self, slowdown:int):
         super().__init__(slowdown)
         self._slowdown = slowdown
@@ -136,8 +136,7 @@ class TutorialAgent(BW4TBrain):
         while True:          
             if Phase.START==self._phase:
                 self._phase=Phase.FIND_NEXT_GOAL
-                return Idle.__name__,{'duration_in_ticks':50}
-
+                return Idle.__name__,{'duration_in_ticks':50}          
             if Phase.FIND_NEXT_GOAL==self._phase:
                 self._answered = False
                 self._advice = False
@@ -166,7 +165,8 @@ class TutorialAgent(BW4TBrain):
                         self._goalLoc = remaining[vic]
                         if 'location' in self._foundVictimLocs[vic].keys():
                             self._sendMessage('Please decide whether it is safe enough to call in a "Fire fighter" to rescue ' + self._goalVic +  ', or whether to "Continue" exploring because it is not safe enough to send in fire fighter. \n \n \
-                                Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                                Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO \n \n \
+                                I suggest to call in a "Fire fighter" to rescue ' + self._goalVic + ' because: \n - toxic concentrations: ppm HCN < 40 and ppm CO < 500','Brutus')
                             if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                                 self._collectedVictims.append(self._goalVic)
                                 self._phase=Phase.FIND_NEXT_GOAL
@@ -275,10 +275,30 @@ class TutorialAgent(BW4TBrain):
                 for info in state.values():
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
                         objects.append(info)
+                        if info['percentage_lel'] > 10 and self._hcn > 40 and self._co > 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500'
+                        if info['percentage_lel'] > 10 and self._hcn > 40 and self._co <=500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm HCN > 40'
+                        if info['percentage_lel'] > 10 and self._hcn <= 40 and self._co > 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm CO > 500'
+                        if info['percentage_lel'] > 10 and self._hcn <= 40 and self._co <= 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - explosion danger > 10% LEL'
+                        if info['percentage_lel'] <= 10 and self._hcn > 40 and self._co > 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500'
+                        if info['percentage_lel'] <= 10 and self._hcn <= 40 and self._co > 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - toxic concentrations: ppm CO > 500'
+                        if info['percentage_lel'] <= 10 and self._hcn > 40 and self._co <= 500:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - toxic concentrations: ppm HCN > 40'
+
+                        if info['percentage_lel'] <= 10 and self._hcn <= 40 and self._co <= 500 and int(info['visualization']['size']*7.5)>15:
+                            advice = '\n \n I suggest to call in a "Fire fighter" to help extinguishing because: \n - explosion danger < 11% LEL \n - toxic concentrations: ppm HCN < 41 and ppm CO < 501 \n - by myself extinguish time > 15 seconds'
+                        if info['percentage_lel'] <= 10 and self._hcn <= 40 and self._co <= 500 and int(info['visualization']['size']*7.5)<=15:
+                            advice = '\n \n I suggest to "Extinguish" alone because: \n - explosion danger < 11% LEL \n - toxic concentrations: ppm HCN < 41 and ppm CO < 501 \n - by myself extinguish time < 16 seconds'
+
                         self._sendMessage('fire is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Extinguish", "Continue" exploring, or call in a "Fire fighter" to help extinguishing. \n \n \
                             Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - fire temperature: ' + str(int(info['visualization']['size']*300)) + ' degrees Celcius \
                             \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - by myself extinguish time: ' + str(int(info['visualization']['size']*7.5)) + ' seconds \n - with help extinguish time: \
-                            ' + str(int(info['visualization']['size']*3.75)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                            ' + str(int(info['visualization']['size']*3.75)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO' + advice,'Brutus')
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                             self._waiting = False
@@ -301,9 +321,28 @@ class TutorialAgent(BW4TBrain):
 
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'iron' in info['obj_id']:
                         objects.append(info)
+                        if self._hcn > 40 and self._co > 500 and int(info['weight']/10)>15:
+                            advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500 \n - by myself removal time > 15 seconds'
+                        if self._hcn > 40 and self._co <= 500 and int(info['weight']/10)>15:
+                            advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm HCN > 40 \n - by myself removal time > 15 seconds'
+                        if self._hcn <= 40 and self._co > 500 and int(info['weight']/10)>15:
+                            advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm CO > 500 \n - by myself removal time > 15 seconds'
+
+                        if self._hcn > 40 and self._co > 500 and int(info['weight']/10)<=15:
+                            advice = '\n \n I suggest to "Remove" iron debris alone because: \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500 \n - by myself removal time < 16 seconds'
+                        if self._hcn > 40 and self._co <= 500 and int(info['weight']/10)<=15:
+                            advice = '\n \n I suggest to "Remove" iron debris alone because: \n - toxic concentrations: ppm HCN > 40 \n - by myself removal time < 16 seconds'
+                        if self._hcn <= 40 and self._co > 500 and int(info['weight']/10)<=15:
+                            advice = '\n \n I suggest to "Remove" iron debris alone because: \n - toxic concentrations: ppm CO > 500 \n - by myself removal time < 16 seconds'
+
+                        if self._hcn <= 40 and self._co <= 500 and int(info['weight']) > 150:
+                            advice='\n \n I suggest to call in a "Fire fighter" to help remove iron debris because: \n - toxic concentrations: ppm CO < 501 and ppm CO < 41 \n - iron debris weight > 150 kilograms'
+                        if self._hcn <= 40 and self._co <= 500 and int(info['weight']) <= 150:
+                            advice='\n \n I suggest to "Remove" iron debris alone because: \n - toxic concentrations: ppm CO < 501 and ppm CO < 41 \n - iron debris weight < 151 kilograms'
                         self._sendMessage('Iron debris is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Remove" alone, "Continue" exploring, or call in a "Fire fighter" to help remove. \n \n \
                             Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
-                            + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                            + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO ' + 
+                            advice,'Brutus')
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                             self._waiting = False
@@ -458,9 +497,27 @@ class TutorialAgent(BW4TBrain):
                                 self._sendMessage('Found ' + vic + ' in ' + self._door['room_name'] + '.','Brutus')
 
                         if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                            if info['percentage_lel'] > 10 and self._hcn > 40 and self._co > 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500'
+                            if info['percentage_lel'] > 10 and self._hcn > 40 and self._co <=500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm HCN > 40'
+                            if info['percentage_lel'] > 10 and self._hcn <= 40 and self._co > 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - explosion danger > 10% LEL \n - toxic concentrations: ppm CO > 500'
+                            if info['percentage_lel'] > 10 and self._hcn <= 40 and self._co <= 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - explosion danger > 10% LEL'
+                            if info['percentage_lel'] <= 10 and self._hcn > 40 and self._co > 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm HCN > 40 and ppm CO > 500'
+                            if info['percentage_lel'] <= 10 and self._hcn <= 40 and self._co > 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm CO > 500'
+                            if info['percentage_lel'] <= 10 and self._hcn > 40 and self._co <= 500:
+                                advice = '\n \n I suggest to "Continue" exploring because: \n - toxic concentrations: ppm HCN > 40'
+
+                            if info['percentage_lel'] <= 10 and self._hcn <= 40 and self._co <= 500:
+                                advice = '\n \n I suggest to call in a "Fire fighter" to help extinguishing and rescue ' + self._recentVic + ' because: \n - explosion danger < 11% LEL \n - toxic concentrations: ppm HCN < 41 and ppm CO < 501'
+                            
                             self._sendMessage('Detected fire in ' + self._door['room_name'] + '. \n \n Please decide whether to call in a "Fire fighter" to help extinguishing and rescue ' + self._recentVic + ', or "Continue" exploring because it is not safe enough to send in fire fighter. \n \n \
                             Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - fire temperature: ' + str(int(info['visualization']['size']*300)) + ' degrees Celcius \
-                            \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                            \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO' + advice,'Brutus')
                             self._waiting = True
                             if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                                 self._waiting = False

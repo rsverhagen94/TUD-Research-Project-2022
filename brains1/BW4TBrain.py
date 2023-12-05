@@ -35,14 +35,38 @@ class BW4TBrain(BW4TAgentBrain, ABC):
                 if water['location'] not in water_locs:
                     water_locs.append(water['location'])
         # remove doormat from water_locs
-        if state[{"name": "RescueBot"}]['location'] in water_locs and state[{"name": "RescueBot"}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
+        if state[{"name": "Brutus"}]['location'] in water_locs and state[{"name": "Brutus"}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
             params['action_duration'] = 13
         else:
             params['action_duration'] = self.__slowdown
-        if act == 'RemoveObject' and 'stone' in params['object_id']:
-            params['action_duration'] = 200
-        if act == 'RemoveObject' and 'tree' in params['object_id']:
-            params['action_duration'] = 100
+        if act == 'RemoveObjectTogether' and 'fire' in params['object_id']:
+            if params['size'] == 1.75:
+                params['action_duration'] = 50
+            if params['size'] == 2: 
+                params['action_duration'] = 100
+            if params['size'] == 3.5:
+                params['action_duration'] = 200
+        if act == 'RemoveObject' and 'fire' in params['object_id']:
+            if params['size'] == 1.75:
+                params['action_duration'] = 100
+            if params['size'] == 2: 
+                params['action_duration'] = 200
+            if params['size'] == 3.5:
+                params['action_duration'] = 400
+        if act == 'RemoveObject' and 'iron' in params['object_id']:
+            if params['size'] == 0.75:
+                params['action_duration'] = 100
+            if params['size'] == 1:
+                params['action_duration'] = 200
+            if params['size'] == 1.25:
+                params['action_duration'] = 400
+        if act == 'RemoveObjectTogether' and 'iron' in params['object_id']:
+            if params['size'] == 0.75:
+                params['action_duration'] = 50
+            if params['size'] == 1:
+                params['action_duration'] = 100
+            if params['size'] == 1.25:
+                params['action_duration'] = 200
 
         return act,params
     

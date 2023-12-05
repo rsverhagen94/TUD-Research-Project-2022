@@ -24,6 +24,59 @@ class IdleResult(ActionResult):
     def __init__(self, result, succeeded):
         super().__init__(result, succeeded)
 
+class Injured(Action):
+    def __init__(self, duration_in_ticks=1):
+        super().__init__(duration_in_ticks)
+
+    def is_possible(self, grid_world, agent_id, **kwargs):
+        return InjuredResult(IdleResult.RESULT_SUCCESS, True)
+
+    def mutate(self, grid_world, agent_id, world_state, **kwargs):
+        reg_ag = grid_world.registered_agents[agent_id]
+        reg_ag.change_property("img_name", "/images/robot-final4.svg")
+        reg_ag.change_property("visualize_size", 1)
+        #reg_ag.change_property("visualize_size", 2)
+        return BackupResult(IdleResult.RESULT_SUCCESS, True)
+
+
+class InjuredResult(ActionResult):
+    """ Result when falling succeeded. """
+    RESULT_SUCCESS = 'Idling action successful'
+
+    """ Result when the emptied space was not actually empty. """
+    RESULT_FAILED = 'Failed to idle'
+
+    def __init__(self, result, succeeded):
+        super().__init__(result, succeeded)
+
+class Backup(Action):
+    def __init__(self, duration_in_ticks=1):
+        super().__init__(duration_in_ticks)
+
+    def is_possible(self, grid_world, agent_id, **kwargs):
+        return BackupResult(IdleResult.RESULT_SUCCESS, True)
+
+    def mutate(self, grid_world, agent_id, world_state, **kwargs):
+        reg_ag = grid_world.registered_agents[agent_id]
+        if 'percentage_lel' in kwargs.keys() and kwargs['percentage_lel']>10:
+            reg_ag.change_property("img_name", "/images/team-danger.svg")
+            reg_ag.change_property("visualize_size", 2)
+        else:    
+            reg_ag.change_property("img_name", "/images/robot-man-extinguish.svg")
+        #reg_ag.change_property("visualize_size", 2)
+        return BackupResult(IdleResult.RESULT_SUCCESS, True)
+
+
+class BackupResult(ActionResult):
+    """ Result when falling succeeded. """
+    RESULT_SUCCESS = 'Idling action successful'
+
+    """ Result when the emptied space was not actually empty. """
+    RESULT_FAILED = 'Failed to idle'
+
+    def __init__(self, result, succeeded):
+        super().__init__(result, succeeded)
+
 class RemoveObjectTogether(Action):
     """ Removes an object from the world.
     An action that permanently removes an
@@ -93,10 +146,14 @@ class RemoveObjectTogether(Action):
             assert kwargs['remove_range'] >= 0  # should be equal or larger than 0
             remove_range = kwargs['remove_range']  # assign
 
+        reg_ag = grid_world.registered_agents[agent_id]  # Registered Agent
+        env_obj = grid_world.environment_objects[object_id]  # Environment object
+
         # get the current agent (exists, otherwise the is_possible failed)
         agent_avatar = grid_world.registered_agents[agent_id]
         agent_loc = agent_avatar.location  # current location
-
+        reg_ag.change_property("img_name", "/images/robot-final4.svg")
+        #reg_ag.change_property("visualize_size", 1)
         # Get all objects in the remove_range
         objects_in_range = grid_world.get_objects_in_range(agent_loc, object_type="*", sense_range=remove_range)
 
@@ -104,16 +161,13 @@ class RemoveObjectTogether(Action):
         objects_in_range.pop(agent_id)
 
         for obj in objects_in_range:  # loop through all objects in range
-            if obj == object_id and get_distance(other_agent['location'], world_state[obj]['location'])<=remove_range and get_distance(other_human['location'], world_state[obj]['location'])<=remove_range and 'rock' in obj or \
-            obj == object_id and get_distance(other_agent['location'], world_state[obj]['location'])<=remove_range and get_distance(other_human['location'], world_state[obj]['location'])<=remove_range and 'stone' in obj:  # if object is in that list
-                success = grid_world.remove_from_grid(object_id)  # remove it, success is whether GridWorld succeeded
-                if success:  # if we succeeded in removal return the appropriate ActionResult
-                    return RemoveObjectResult(RemoveObjectResult.OBJECT_REMOVED.replace('object_id'.upper(),
+            success = grid_world.remove_from_grid(object_id)  # remove it, success is whether GridWorld succeeded
+            if success:  # if we succeeded in removal return the appropriate ActionResult
+                return RemoveObjectResult(RemoveObjectResult.OBJECT_REMOVED.replace('object_id'.upper(),
                                                                                         str(object_id)), True)
-                else:  # else we return a failure due to the GridWorld removal failed
-                    return RemoveObjectResult(RemoveObjectResult.REMOVAL_FAILED.replace('object_id'.upper(),
+            else:  # else we return a failure due to the GridWorld removal failed
+                return RemoveObjectResult(RemoveObjectResult.REMOVAL_FAILED.replace('object_id'.upper(),
                                                                                         str(object_id)), False)
-
         # If the object was not in range, or no objects were in range we return that the object id was not in range
         return RemoveObjectResult(RemoveObjectResult.OBJECT_ID_NOT_WITHIN_RANGE
                                   .replace('remove_range'.upper(), str(remove_range))
@@ -360,8 +414,8 @@ class CarryObject(Action):
         #if 'critical' in object_id and 'bot' in agent_id:
             # change our image 
         #    reg_ag.change_property("img_name", "/images/carry-critical-robot.svg")
-        if 'mild' in object_id and 'bot' in agent_id:
-            reg_ag.change_property("img_name", "/images/carry-mild-robot.svg")
+        if 'mild' in object_id and 'brutus' in agent_id:
+            reg_ag.change_property("img_name", "/images/carry-mild-human.svg")
 
         # Remove it from the grid world (it is now stored in the is_carrying list of the AgentAvatar
         succeeded = grid_world.remove_from_grid(object_id=env_obj.obj_id, remove_from_carrier=False)
@@ -556,8 +610,8 @@ class Drop(Action):
         """
         reg_ag = grid_world.registered_agents[agent_id]
         if 'human' in agent_id:
-            reg_ag.change_property("img_name", "/images/rescue-man-final3.svg")
-        if 'bot' in agent_id:
+            reg_ag.change_property("img_name", "/images/robot-final4.svg")
+        if 'brutus' in agent_id:
             reg_ag.change_property("img_name", "/images/robot-final4.svg")
 
         # fetch range from kwargs
