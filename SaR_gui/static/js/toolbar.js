@@ -519,6 +519,8 @@ function add_message(chatroom_ID, mssg) {
     mssg_content = mssg_content.replaceAll("stones", "<img src='/static/images/stone-small.svg' height= 40 width=40/>");
     mssg_content = mssg_content.replaceAll("tree", "<img src='/static/images/tree-fallen2.svg' height= 40 width=40/>");
 
+    mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' height=640 width=640/>");
+
     if (mssg_content.includes("Our score is")) {
         function score() {
             const text = mssg_content.split(".").join("").split(" ").at(-1);

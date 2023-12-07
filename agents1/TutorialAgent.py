@@ -1,4 +1,5 @@
 import sys, random, enum, ast, time
+from rpy2 import robjects
 from matrx import grid_world
 from brains1.BW4TBrain import BW4TBrain
 from actions1.customActions import *
@@ -71,6 +72,7 @@ class TutorialAgent(BW4TBrain):
         self._decided = False
         self._co = 0
         self._hcn = 0
+        self._count = 0 
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
@@ -82,6 +84,8 @@ class TutorialAgent(BW4TBrain):
         return state
 
     def decide_on_bw4t_action(self, state:State):
+        print('Loading....')
+        self._loadR2Py()
         for info in state.values():
             if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
                 self._co = info['co_ppm']
@@ -301,9 +305,12 @@ class TutorialAgent(BW4TBrain):
 
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'iron' in info['obj_id']:
                         objects.append(info)
-                        self._sendMessage('Iron debris is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Remove" alone, "Continue" exploring, or call in a "Fire fighter" to help remove. \n \n \
-                            Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
-                            + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                        #self._sendMessage('Iron debris is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Remove" alone, "Continue" exploring, or call in a "Fire fighter" to help remove. \n \n \
+                        #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
+                        #    + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                        if self._count  < 1:
+                            self._sendMessage('This is how much each feature contributed to the predicted sensitivity: \n' + self._R2PyPlot(), 'Brutus')
+                            self._count+=1
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                             self._waiting = False
@@ -711,3 +718,113 @@ class TutorialAgent(BW4TBrain):
         if 'Searching' not in mssg1 and 'Found' not in mssg1:
             if explanation in self._providedExplanations and self._sendMessages[-1]!=mssg1:
                 self._sendMessage(mssg2,sender) 
+
+    #r2py_plot(situation, features)
+    #def _R2PyPlot(self, situation, features):
+    def _R2PyPlot(self):
+        duration = 15
+        resistance = 60
+        temperature = "higher"
+        distance = "large"
+        r_script = (f'''
+                    # CORRECT! PREDICT SENSITIVITY IN SITUATION 'SEND IN FIREFIGHTERS TO RESCUE OR NOT' BASED ON FIRE DURATION, FIRE RESISTANCE, TEMPERATURE WRT AUTO-IGNITION, AND DISTANCE VICTIM - FIRE 
+                    data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
+                    data$bin <- as.factor(data$bin)
+                    data$gender <- as.factor(data$gender)
+                    data$age <- as.factor(data$age)
+                    data$culture <- as.factor(data$culture)
+                    data$education <- as.factor(data$education)
+                    data$discipline <- as.factor(data$discipline)
+                    data$situation <- as.factor(data$situation)
+                    data$temperature <- as.factor(data$temperature)
+                    data$distance <- as.factor(data$distance)
+                    data$smoke <- as.factor(data$smoke)
+                    data$location <- as.factor(data$location)
+                    data_subset <- subset(data, data$situation=="1"|data$situation=="8")
+                    data_subset$people <- as.numeric(data_subset$people)
+                    data_subset <- subset(data_subset, (!data_subset$temperature=="close"))
+                    data_subset <- data_subset %>% drop_na(distance)
+                    fit <- lm(sensitivity ~ duration + resistance + temperature + distance, data = data_subset[-c(237,235,202,193,114,108,58,51,34,28,22),])
+
+                    # SHAP explanations
+                    #pred <- ggpredict(fit, terms = c("duration[30]", "resistance[30]", "temperature[higher]", "distance[large]"))
+                    pred_data <- subset(data_subset[-c(237,235,202,193,114,108,58,51,34,28,22),], select = c("duration", "resistance", "temperature", "distance", "sensitivity"))
+                    pred_data$temperature <- factor(pred_data$temperature, levels = c("higher", "lower"))
+                    explainer <- shapr(pred_data, fit)
+                    p <- mean(pred_data$sensitivity)
+                       
+                    new_data <- data.frame(duration = c({duration}), 
+                                            resistance = c({resistance}),
+                                            temperature = c("{temperature}"),
+                                            distance = c("{distance}"))
+
+                    new_data$temperature <- factor(new_data$temperature, levels = c("higher", "lower"))
+                    new_data$distance <- factor(new_data$distance, levels = c("large", "small"))
+                    new_pred <- predict(fit, new_data)
+                    explanation_cat <- shapr::explain(new_data, approach = "ctree", explainer = explainer, prediction_zero = p)
+
+                    # Shapley values
+                    shapley_values <- explanation_cat[["dt"]][,2:5]
+
+                    # Standardize Shapley values
+                    standardized_values <- shapley_values / sum(abs(shapley_values))
+                    explanation_cat[["dt"]][,2:5] <- standardized_values
+                    
+                    pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
+                    pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
+                    levels(pl[["data"]]$sign) <- c("positive", "negative")
+                    pl <- pl + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=12,color="#22292F",face="bold",margin = margin(b=5)),
+                        plot.caption = element_text(size=12,margin = margin(t=25),color="#606F7B"),
+                        panel.background = element_blank(),
+                        axis.text = element_text(size=10,colour = "#22292F"),axis.text.x = element_text(colour = "#22292F",),axis.text.y = element_text(colour = "#22292F",margin = margin(t=5)),
+                        axis.line = element_line(colour = "#22292F"), axis.title = element_text(size=12), axis.title.y = element_text(colour = "#22292F",margin = margin(r=10),hjust = 0.5),
+                        axis.title.x = element_text(colour = "#22292F", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=10),
+                        legend.position ="bottom",legend.title = element_text(size=12,face = "plain")) + ggtitle("Contribution of features to predicted sensitivity") + labs(y="Relative feature contribution") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.01,0.01))
+
+                    ggsave("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plot.svg", pl)
+                    ''')
+        robjects.r(r_script)
+        return 'plot'
+    
+    # move to utils file and call once when running main.py
+    def _loadR2Py(self):
+        r_script = (f'''
+                    # Load libraries
+                    library('ggplot2')
+                    library('dplyr')
+                    library('rstatix')
+                    library('ggpubr')
+                    library('tidyverse')
+                    library('psych')
+                    library("gvlma")
+                    library("nparLD")
+                    library('pastecs')
+                    library('WRS2')
+                    library('crank')
+                    library('lme4')
+                    library('psycho')
+                    library('lmerTest')
+                    library('corrplot')
+                    library('RColorBrewer')
+                    library('sjPlot')
+                    library('sjmisc')
+                    library('ggeffects')
+                    library('interactions')
+                    library('ggcorrplot')
+                    library('car')
+                    library('caret')
+                    library('readxl')
+                    library('GGally')
+                    library('brant')
+                    library('wordcloud')
+                    library('RColorBrewer')
+                    library('wordcloud2')
+                    library('tm')
+                    library('tidytext')
+                    library('tau')
+                    library('shapr')
+                    library('DALEX')
+                    library('iml')
+                    library('pre')
+                    ''')
+        robjects.r(r_script)
