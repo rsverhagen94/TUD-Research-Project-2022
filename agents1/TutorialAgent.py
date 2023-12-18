@@ -773,14 +773,20 @@ class TutorialAgent(BW4TBrain):
                     pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
                     pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
                     levels(pl[["data"]]$sign) <- c("positive", "negative")
-                    pl <- pl + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=12,color="#22292F",face="bold",margin = margin(b=5)),
-                        plot.caption = element_text(size=12,margin = margin(t=25),color="#606F7B"),
-                        panel.background = element_blank(),
-                        axis.text = element_text(size=10,colour = "#22292F"),axis.text.x = element_text(colour = "#22292F",),axis.text.y = element_text(colour = "#22292F",margin = margin(t=5)),
-                        axis.line = element_line(colour = "#22292F"), axis.title = element_text(size=12), axis.title.y = element_text(colour = "#22292F",margin = margin(r=10),hjust = 0.5),
-                        axis.title.x = element_text(colour = "#22292F", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=10),
-                        legend.position ="bottom",legend.title = element_text(size=12,face = "plain")) + ggtitle("Contribution of features to predicted sensitivity") + labs(y="Relative feature contribution") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.01,0.01))
-
+                    data_plot <- pl[["data"]]
+                    labels <- c(duration = paste("<img src='/home/ruben/Downloads/fire-duration.png' width='50' /><br>\n", new_data$duration), 
+                    resistance = paste("<img src='/home/ruben/Downloads/people.png' width='50' /><br>\n", new_data$resistance), 
+                    temperature = paste("<img src='/home/ruben/Downloads/resistance.png' width='50' /><br>\n", new_data$temperature), 
+                    distance = paste("<img src='/home/ruben/Downloads/clock.png' width='50' /><br>\n", new_data$distance))
+                    data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
+                    pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
+                    plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
+                    panel.background = element_blank(),
+                    axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
+                    axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
+                    axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
+                    legend.position ="bottom",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
+                    axis.ticks = element_line(color = "black"))
                     ggsave("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plot.svg", pl)
                     ''')
         robjects.r(r_script)
@@ -826,5 +832,10 @@ class TutorialAgent(BW4TBrain):
                     library('DALEX')
                     library('iml')
                     library('pre')
+                    library('ggtext')
+                    library('ggdist')
+                    library('rvest')
+                    library('png')
+                    library('grid')
                     ''')
         robjects.r(r_script)
