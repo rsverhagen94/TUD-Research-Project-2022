@@ -309,7 +309,7 @@ class TutorialAgent(BW4TBrain):
                         #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
                         #    + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
                         if self._count  < 1:
-                            self._sendMessage('This is how much each feature contributed to the predicted sensitivity: \n' + self._R2PyPlot(), 'Brutus')
+                            self._sendMessage('I have found an injured victims who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n' + self._R2PyPlot(), 'Brutus')
                             self._count+=1
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
@@ -774,10 +774,10 @@ class TutorialAgent(BW4TBrain):
                     pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
                     levels(pl[["data"]]$sign) <- c("positive", "negative")
                     data_plot <- pl[["data"]]
-                    labels <- c(duration = paste("<img src='/home/ruben/Downloads/fire-duration.png' width='50' /><br>\n", new_data$duration), 
-                    resistance = paste("<img src='/home/ruben/Downloads/people.png' width='50' /><br>\n", new_data$resistance), 
-                    temperature = paste("<img src='/home/ruben/Downloads/resistance.png' width='50' /><br>\n", new_data$temperature), 
-                    distance = paste("<img src='/home/ruben/Downloads/clock.png' width='50' /><br>\n", new_data$distance))
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='57' /><br>\n", new_data$duration), 
+                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='71' /><br>\n", new_data$resistance), 
+                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_black.png' width='79' /><br>\n", new_data$temperature), 
+                    distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='100' /><br>\n", new_data$distance))
                     data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
                     pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
                     plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
