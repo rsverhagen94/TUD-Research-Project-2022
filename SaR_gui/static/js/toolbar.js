@@ -530,43 +530,13 @@ function add_message(chatroom_ID, mssg) {
         score()
     }
 
-    if (mssg_content == "Ready!") {
-
-var limit = 480
-var timeStamp = Date.now(),
-		sessionStamp = localStorage.getItem('ts'),
-    elapsedTime;
-if (!sessionStamp) {
-	localStorage.setItem('ts', timeStamp.toString());
-  sessionStamp = timeStamp;
-}
-else {
-  sessionStamp = parseInt(sessionStamp);
-}
-
-function increment() {
-	elapsedTime = Date.now() - sessionStamp;
-    d = elapsedTime/1000
-    m = Math.floor(d % 3600 / 60);
-    s = Math.floor(d % 3600 % 60);
-    m = checkTime(m); // add a leading zero if it's single digit
-    s = checkTime(s);
-  document.getElementById('elapsedTime').innerHTML = 'Elapsed time: ' + m + ":" + s;
-  if (elapsedTime/1000>limit) {
-    document.getElementById('elapsedTime').innerHTML = 'Time up!'
-    localStorage.removeItem('ts');
-    toggle_pause();
-}
-
-}
-
-function checkTime(i) {
-    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
-    return i;
-}
-        setInterval(increment, 1000);
+    if (mssg_content.includes("Ticks left is")) {
+        function clock() {
+            const text = mssg_content.split(".").join("").split(" ").at(-1);
+            document.getElementById('clock').innerHTML = 'Time left: ' + text + ' minutes';
+        }
+        clock()
     }
-
 
     var div = document.createElement("div");
     div.className = "message_you"; // by default assume we sent this message
@@ -584,7 +554,7 @@ function checkTime(i) {
     }
 
     // add the message text to the message div
-    if (!mssg_content.includes("Our score is") && !mssg_content.includes("You ignored me") && !mssg_content.includes("Your workload") && !mssg_content.includes("Your performance")) {
+    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Ticks left is") && !mssg_content.includes("Your workload") && !mssg_content.includes("Your performance")) {
     var content = document.createElement('span');
     content.className = "chat-content";
     content.innerHTML = mssg_content;

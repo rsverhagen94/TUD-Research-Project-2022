@@ -72,20 +72,22 @@ class TutorialAgent(BW4TBrain):
         self._decided = False
         self._co = 0
         self._hcn = 0
-        self._count = 0 
+        self._count = 0
+        self._score = 0 
+        self._timeLeft = 90
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, 
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)
+        print('Loading....')
+        self._loadR2Py()
 
     def filter_bw4t_observations(self, state):
         #self._processMessages(state)
         return state
 
     def decide_on_bw4t_action(self, state:State):
-        print('Loading....')
-        self._loadR2Py()
         for info in state.values():
             if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
                 self._co = info['co_ppm']
@@ -116,6 +118,7 @@ class TutorialAgent(BW4TBrain):
             self._distanceDrop = 'close'
 
         self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
+        print(state['World']['nr_ticks'])
 
         for info in state.values():
             if 'is_human_agent' in info and 'Human' in info['name'] and len(info['is_carrying'])>0 and 'critical' in info['is_carrying'][0]['obj_id']:
@@ -136,7 +139,10 @@ class TutorialAgent(BW4TBrain):
         #self._trustBlief(self._teamMembers, receivedMessages)
 
         # CRUCIAL TO NOT REMOVE LINE BELOW!
-        #self._sendMessage('Our score is ' + str(state['Brutus']['score']) +'.', 'Brutus')
+        self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
+        if state['World']['nr_ticks'] % 60 == 0:
+            self._sendMessage('Ticks left is ' + str(self._timeLeft) + '.', 'Brutus')
+            self._timeLeft = self._timeLeft - 1
         while True:          
             if Phase.START==self._phase:
                 self._phase=Phase.FIND_NEXT_GOAL
@@ -661,10 +667,13 @@ class TutorialAgent(BW4TBrain):
 
     def _sendMessage(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
-        if msg.content not in self.received_messages_content and 'score' not in msg.content:
+        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Ticks left is' not in msg.content:
             self.send_message(msg)
             self._sendMessages.append(msg.content)
-        if 'score' in msg.content:
+        # Sending the hidden score message (DO NOT REMOVE)
+        if 'Our score is' in msg.content:
+            self.send_message(msg)
+        if 'Ticks left is' in msg.content:
             self.send_message(msg)
 
         #if self.received_messages and self._sendMessages:
