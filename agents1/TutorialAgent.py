@@ -1,4 +1,4 @@
-import sys, random, enum, ast, time
+import sys, random, enum, ast, time, threading
 from rpy2 import robjects
 from matrx import grid_world
 from brains1.BW4TBrain import BW4TBrain
@@ -82,6 +82,22 @@ class TutorialAgent(BW4TBrain):
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)
         print('Loading....')
         self._loadR2Py()
+        counter_lock = threading.Lock()
+        counter_value = 91  # Initial counter value
+        def schedule_print(counter):
+            with counter_lock:
+                counter -= 1
+                if counter < 0:
+                    counter = 90  # Reset the counter after reaching 0
+
+            print(f"Printing a message. Counter: {counter}")
+            self._sendMessage('Time left: ' + str(counter) + '.', 'RescueBot')
+
+            # Schedule the next print
+            threading.Timer(6, schedule_print, args=[counter]).start()
+
+        # Start the initial print
+        schedule_print(counter_value)
 
     def filter_bw4t_observations(self, state):
         #self._processMessages(state)
@@ -118,7 +134,6 @@ class TutorialAgent(BW4TBrain):
             self._distanceDrop = 'close'
 
         self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
-        print(state['World']['nr_ticks'])
 
         for info in state.values():
             if 'is_human_agent' in info and 'Human' in info['name'] and len(info['is_carrying'])>0 and 'critical' in info['is_carrying'][0]['obj_id']:
@@ -140,10 +155,9 @@ class TutorialAgent(BW4TBrain):
 
         # CRUCIAL TO NOT REMOVE LINE BELOW!
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
-        if state['World']['nr_ticks'] % 60 == 0:
-            self._sendMessage('Ticks left is ' + str(self._timeLeft) + '.', 'Brutus')
-            self._timeLeft = self._timeLeft - 1
-        while True:          
+
+
+        while True:     
             if Phase.START==self._phase:
                 self._phase=Phase.FIND_NEXT_GOAL
                 return Idle.__name__,{'duration_in_ticks':50}
@@ -667,13 +681,13 @@ class TutorialAgent(BW4TBrain):
 
     def _sendMessage(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
-        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Ticks left is' not in msg.content:
+        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content:
             self.send_message(msg)
             self._sendMessages.append(msg.content)
         # Sending the hidden score message (DO NOT REMOVE)
         if 'Our score is' in msg.content:
             self.send_message(msg)
-        if 'Ticks left is' in msg.content:
+        if 'Time left:' in msg.content:
             self.send_message(msg)
 
         #if self.received_messages and self._sendMessages:

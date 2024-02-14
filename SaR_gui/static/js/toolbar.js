@@ -530,7 +530,7 @@ function add_message(chatroom_ID, mssg) {
         score()
     }
 
-    if (mssg_content.includes("Ticks left is")) {
+    if (mssg_content.includes("Time left:")) {
         function clock() {
             const text = mssg_content.split(".").join("").split(" ").at(-1);
             document.getElementById('clock').innerHTML = 'Time left: ' + text + ' minutes';
@@ -554,7 +554,7 @@ function add_message(chatroom_ID, mssg) {
     }
 
     // add the message text to the message div
-    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Ticks left is") && !mssg_content.includes("Your workload") && !mssg_content.includes("Your performance")) {
+    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Time left:") && !mssg_content.includes("Your workload") && !mssg_content.includes("Your performance")) {
     var content = document.createElement('span');
     content.className = "chat-content";
     content.innerHTML = mssg_content;
