@@ -526,11 +526,14 @@ function add_message(chatroom_ID, mssg) {
     if (mssg_content.includes("Time left:")) {
         function clock() {
             const text = mssg_content.split(".").join("").split(" ").at(-1);
-            document.getElementById('clock').innerHTML = 'Time left: ' + text + ' minutes';
+            const newTime = 'Time left: ' + text + ' minutes';
+            document.getElementById('clock').innerHTML = newTime;
+    
+            // Assuming you have an <h6> element with id="fireResistance"
+            document.getElementById('fireResistance').innerHTML = `<img src='/static/images/fire_resistance_transparent.svg' width=50/> ${text} min.`;
         }
-        clock()
+        clock();
     }
-
     var div = document.createElement("div");
     div.className = "message_you"; // by default assume we sent this message
 

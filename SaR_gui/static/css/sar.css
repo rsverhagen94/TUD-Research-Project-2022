@@ -210,8 +210,8 @@ h5 {
   top: 46px;
   right: 0;
   width: 100%;
-  max-width: 850px;
-  height: calc(100% - 46px);
+  max-width: 900px;
+  height: 93%;
 }
 
 #chatrooms_list {

@@ -8,17 +8,19 @@ from worlds1.worldBuilder import create_builder
 from pathlib import Path
 
 if __name__ == "__main__":
-    print("\nEnter one of the environments 'trial' or 'experiment':")
-    choice1=input()
-    if choice1=='trial':
-        builder = create_builder(exp_version='trial',condition='tutorial')
-    else:
-        print("\nEnter one of the explainable robot conditions 'baseline', 'trust', 'workload', or 'performance':")
-        choice2=input()
-        if choice2=='trust' or choice2=='workload' or choice2=='performance' or choice2=='baseline':
-            builder = create_builder(exp_version=choice1,condition=choice2)
-        else:
-            print("\nWrong condition name entered")
+    #print("\nEnter one of the environments 'trial' or 'experiment':")
+    #choice1=input()
+    #if choice1=='trial':
+    #    builder = create_builder(exp_version='trial',condition='tutorial')
+    #else:
+    #    print("\nEnter one of the explainable robot conditions 'baseline', 'trust', 'workload', or 'performance':")
+    #    choice2=input()
+    #    if choice2=='trust' or choice2=='workload' or choice2=='performance' or choice2=='baseline':
+            #builder = create_builder(exp_version=choice1,condition=choice2)
+        #else:
+        #    print("\nWrong condition name entered")
+    choice1 = 'experiment'
+    builder = create_builder(exp_version='experiment',condition='baseline')
 
     # Start overarching MATRX scripts and threads, such as the api and/or visualizer if requested. Here we also link our own media resource folder with MATRX.
     media_folder = pathlib.Path().resolve()
