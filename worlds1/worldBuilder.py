@@ -89,7 +89,7 @@ def add_agents(builder, condition, exp_version):
             builder.add_human_agent(loc, brain, team=team_name, name="Human",
                                     key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#9a9083', visualize_when_busy=False)
 
-def create_builder(exp_version, condition):
+def create_builder(exp_version, condition, task):
     # Set numpy's random generator
     np.random.seed(random_seed)
 
