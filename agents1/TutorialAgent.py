@@ -74,7 +74,18 @@ class TutorialAgent(BW4TBrain):
         self._hcn = 0
         self._count = 0
         self._score = 0 
-        self._timeLeft = 90
+        self._timeLeft = 10
+
+    def update_time(self):
+        with self._counter_lock:
+            self._counter_value -= 1
+            if self._counter_value < 0:
+                self._counter_value = 90  # Reset the counter after reaching 0
+
+        self._sendMessage('Time left: ' + str(self._counter_value) + '.', 'RescueBot')
+
+        # Schedule the next print
+        threading.Timer(6, self.update_time).start()
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
@@ -82,22 +93,10 @@ class TutorialAgent(BW4TBrain):
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)
         print('Loading....')
         self._loadR2Py()
-        counter_lock = threading.Lock()
-        counter_value = 91  # Initial counter value
-        def schedule_print(counter):
-            with counter_lock:
-                counter -= 1
-                if counter < 0:
-                    counter = 90  # Reset the counter after reaching 0
-
-            print(f"Printing a message. Counter: {counter}")
-            self._sendMessage('Time left: ' + str(counter) + '.', 'RescueBot')
-
-            # Schedule the next print
-            threading.Timer(6, schedule_print, args=[counter]).start()
-
+        self._counter_lock = threading.Lock()
+        self._counter_value = 11
         # Start the initial print
-        schedule_print(counter_value)
+        self.update_time()
 
     def filter_bw4t_observations(self, state):
         #self._processMessages(state)
