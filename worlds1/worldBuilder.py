@@ -114,7 +114,7 @@ def create_builder(exp_version, condition):
     if exp_version == "experiment":
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#1F262A")
         # Create the rooms
-        builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#343a40")
+        builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#000000")
         builder.add_room(top_left_location=(1,1), width=5, height=4, name='area 1', door_locations=[(3,4)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0, door_open_colour='#9a9083', area_custom_properties={'doormat':(3,5)})
         builder.add_room(top_left_location=(7,1), width=5, height=4, name='area 2', door_locations=[(9,4)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#9a9083', area_custom_properties={'doormat':(9,5)})
         builder.add_room(top_left_location=(13,1), width=5, height=4, name='area 3', door_locations=[(15,4)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#9a9083', area_custom_properties={'doormat':(15,5)})

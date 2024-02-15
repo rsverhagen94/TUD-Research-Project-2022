@@ -521,14 +521,7 @@ function add_message(chatroom_ID, mssg) {
 
     mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' height=640 width=640/>");
 
-    if (mssg_content.includes("Our score is")) {
-        function score() {
-            const text = mssg_content.split(".").join("").split(" ").at(-1);
-
-            document.getElementById('score').innerHTML = 'Score: ' + text;
-        }
-        score()
-    }
+    
 
     if (mssg_content.includes("Time left:")) {
         function clock() {
