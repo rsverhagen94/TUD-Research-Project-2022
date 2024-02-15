@@ -798,7 +798,7 @@ class TutorialAgent(BW4TBrain):
                     data_plot <- pl[["data"]]
                     labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='57' /><br>\n", new_data$duration), 
                     resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='71' /><br>\n", new_data$resistance), 
-                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_black.png' width='79' /><br>\n", new_data$temperature), 
+                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='79' /><br>\n", new_data$temperature), 
                     distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='100' /><br>\n", new_data$distance))
                     data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
                     pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),

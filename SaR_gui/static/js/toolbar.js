@@ -383,7 +383,6 @@ function open_chatroom(chatroom_display_name, chatroom_ID, chatroom_type) {
     }
 
     if (chat_blocked && lv_agent_type == "human-agent") {
-        document.getElementById("chat_form_input").placeholder = "Type a message..";
         document.getElementById("chat_form_submit").disabled = false;
         chat_blocked = false;
     }

@@ -133,7 +133,7 @@ html {
 
 #messages {
     overflow-y: auto;
-    max-height: 80vh;
+    max-height: 75vh;
 }
 
 .message_you {

@@ -1,6 +1,19 @@
 <!doctype html>
 <html lang="en">
 
+<style>
+    #fireResistance,
+    #duration,
+    #victims,
+    #smoke,
+    #temperature,
+    #location,
+    #distance {
+        display: inline-block;
+        margin-right: 8px; /* Adjust the margin as needed for spacing */
+    }
+</style>
+
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -26,19 +39,20 @@
 
     <!-- Toolbar -->
     <div id="matrx-toolbar" class="row toolbar bg-dark">
-        <div class="col-sm" align="right">
-            <div id="elapsedTime" class="btn btn-dark"></div>
-            <div id="score" class="btn btn-dark"></div>
+        <div class="col-sm">
             <img src="/static/images/matrx_logo_light.svg" alt="MATRX" id="matrx_logo">
             <button type="button" class="btn btn-dark" id="start_button"><i class="fas fa-play text-light"></i></button>
             <button type="button" class="btn btn-dark hidden" id="pause_button"><i class="fas fa-pause text-light"></i></button>
             <button type="button" class="btn btn-dark" id="stop_button"><i class="fas fa-stop text-light"></i></button>
-            <div class="btn-group">
+            <div class="btn-group" style="display:none;">
                 <button type="button" class="btn btn-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-users"></i></button>
                 <div id="agent_dropdown" class="dropdown-menu">
                 </div>
             </div>
-            <button type="button" class="btn btn-dark" id="chat_button" onclick="chatToggle()" data-toggle="collapse" data-target="#chat" aria-expanded="true" aria-controls="chat"><i class="fas fa-comments text-light"></i></button>
+            <div id="clock" class="btn btn-dark"></div>
+        </div>
+        <div class="col-sm" align="right">
+            <button type="button" class="btn btn-dark" id="chat_button" onclick="chatToggle()" data-toggle="collapse" data-target="#chat" aria-expanded="false" aria-controls="chat"><i class="fas fa-comments text-light"></i></button>
         </div>
     </div>
 
@@ -54,22 +68,36 @@
         <!-- Chat -->
         <div class="collapse" id="chat">
             <div class="container-fluid">
-                <h5>Chats</h5>
+            </br>
+                <h6 id="fireResistance"><img src='/static/images/fire_resistance_transparent.svg' width=50/> 90 min.</h6>   
+                <h6 id="duration"> <img src='/static/images/duration_transparent.svg' width=40/> 90 min.</h6> 
+                <h6 id="victims"> <img src='/static/images/victim_transparent.svg' width=25/> 4/6</h6>
+                <h6 id="smoke"><img src='/static/images/smoke_transparent.svg' width=69/> normal</h6>
+                <h6 id="temperature"><img src='/static/images/celsius_transparent.svg' width=56/> < threshold</h6>
+                <h6 id="location"><img src='/static/images/location_transparent.svg' width=44/> unknown</h6>
+                <h6 id="distance"><img src='/static/images/distance_transparent.svg' width=70/> unknown</h6>
                 <div class="row">
-                    <div class="col-md-3" id="chatrooms_list">
-                        <div class="contact" id="new_chat_button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">+</div>
-                        <div id="new_chat_dropdown" class="dropdown-menu"></div>
-                    </div>
+                  <div class="col-md-3" id="chatrooms_list" style="display:none">
+                    <div id="new_chat_dropdown" class="dropdown-menu"></div>
+                </div>
                     <div class="col-md-12">
+                        <hr style="border-top: 2px solid black;">
                         <div id="messages">
                         </div>
-                        <!-- "God" is not an agent, only a view, and as such cannot send messages -->
-                        <!-- <input class="form-control" id="message_input" placeholder="Type a message">
-                        <button type="button" class="btn btn-primary" onclick="sendMessage()">Send</button> -->
+                        <button type="button" id="chat_form_submit" class="btn btn-primary" onclick="my_send_message_function('Extinguish')">Extinguish</button>
+                        <button type="button" id="chat_form_submit" class="btn btn-primary" onclick="my_send_message_function('Remove')">Remove</button>
+                        <button type="button" id="chat_form_submit" class="btn btn-primary" onclick="my_send_message_function('Continue')">Continue</button>
+                        <button type="button" id="chat_form_submit" class="btn btn-primary" onclick="my_send_message_function('Fire fighter')">Fire fighter</button>
+                        </div>
+                      </div>
+
+
                     </div>
+                    <!--button type="button" id="collect_button" class="btn btn-primary" style="margin-bottom: .2em">Collected:</button-->                          
                 </div>
             </div>
         </div>
+
     </div>
 
 
