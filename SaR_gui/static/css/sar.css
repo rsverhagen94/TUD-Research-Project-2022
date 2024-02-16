@@ -7,6 +7,8 @@ html {
     background-repeat: no-repeat;
     background-size: cover;
     z-index: 10000000000;
+    border-right: 2px solid black;
+    border-bottom: 2px solid black;
 }
 
 #grid .tile,
@@ -136,6 +138,13 @@ html {
     max-height: 75vh;
 }
 
+.full-width-hr {
+  margin-left: -25px; /* Adjust this value based on your layout's padding */
+  margin-right: -15px; /* Adjust this value based on your layout's padding */
+  width: auto; /* Allows the element to stretch beyond its container's padding */
+  border-bottom: 2px solid black;
+}
+
 .message_you {
     color: #fff;
     position: relative;
@@ -212,6 +221,8 @@ h5 {
   width: 100%;
   max-width: 900px;
   height: 93%;
+  border-left: 2px solid black;
+  border-bottom: 2px solid black;
 }
 
 #chatrooms_list {
