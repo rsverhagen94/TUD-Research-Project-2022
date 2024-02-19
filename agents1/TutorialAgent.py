@@ -230,13 +230,13 @@ class TutorialAgent(BW4TBrain):
                         self._door = state.get_room_doors(self._getClosestRoom(state,unsearchedRooms,agent_location))[0]
                         self._doormat = state.get_room(self._getClosestRoom(state,unsearchedRooms,agent_location))[-1]['doormat']
                         if self._door['room_name'] == 'area 1':
-                            self._doormat = (3,5)
+                            self._doormat = (2,4)
                         self._phase = Phase.PLAN_PATH_TO_ROOM
                     if self._currentDoor!=None:
                         self._door = state.get_room_doors(self._getClosestRoom(state,unsearchedRooms,self._currentDoor))[0]
                         self._doormat = state.get_room(self._getClosestRoom(state, unsearchedRooms,self._currentDoor))[-1]['doormat']
                         if self._door['room_name'] == 'area 1':
-                            self._doormat = (3,5)
+                            self._doormat = (2,4)
                         self._phase = Phase.PLAN_PATH_TO_ROOM
 
             if Phase.PLAN_PATH_TO_ROOM==self._phase:
@@ -245,13 +245,13 @@ class TutorialAgent(BW4TBrain):
                     self._door = state.get_room_doors(self._foundVictimLocs[self._goalVic]['room'])[0]
                     self._doormat = state.get_room(self._foundVictimLocs[self._goalVic]['room'])[-1]['doormat']
                     if self._door['room_name'] == 'area 1':
-                        self._doormat = (3,5)
+                        self._doormat = (2,4)
                     #doorLoc = self._door['location']
                     doorLoc = self._doormat
                 else:
                     #doorLoc = self._door['location']
                     if self._door['room_name'] == 'area 1':
-                        self._doormat = (3,5)
+                        self._doormat = (2,4)
                     doorLoc = self._doormat
                 self._navigator.add_waypoints([doorLoc])
                 self._tick = state['World']['nr_ticks']
