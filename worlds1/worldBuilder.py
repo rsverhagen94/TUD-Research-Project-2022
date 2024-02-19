@@ -86,7 +86,7 @@ def add_agents(builder, condition, exp_version):
                 loc = (24,13)
             else:
                 loc = (16,9)
-            builder.add_human_agent(loc, brain, team=team_name, name="Human",
+            builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=0,
                                     key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
 
 def create_builder(exp_version, condition, task):

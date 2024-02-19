@@ -79,10 +79,13 @@ class TutorialAgent(BW4TBrain):
     def update_time(self):
         with self._counter_lock:
             self._counter_value -= 1
+            self._duration += 1
             if self._counter_value < 0:
                 self._counter_value = 90  # Reset the counter after reaching 0
+                self._duration = 0
 
         self._sendMessage('Time left: ' + str(self._counter_value) + '.', 'RescueBot')
+        self._sendMessage('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
 
         # Schedule the next print
         threading.Timer(6, self.update_time).start()
@@ -95,6 +98,7 @@ class TutorialAgent(BW4TBrain):
         self._loadR2Py()
         self._counter_lock = threading.Lock()
         self._counter_value = 11
+        self._duration = 14
         # Start the initial print
         self.update_time()
 
@@ -183,6 +187,7 @@ class TutorialAgent(BW4TBrain):
                 if not remainingZones:
                     return None,{}
 
+                self._sendMessage('Victims rescued: ' + str(len(self._collectedVictims)) + '/' + str(len(remainingVics)+len(self._collectedVictims)) + '.', 'RescueBot')
                 for vic in remainingVics:
                     if vic in self._foundVictims and vic not in self._todo:
                         self._goalVic = vic
@@ -680,13 +685,11 @@ class TutorialAgent(BW4TBrain):
 
     def _sendMessage(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
-        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content:
+        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content and 'Fire duration:' not in msg.content and 'Victims rescued:' not in msg.content:
             self.send_message(msg)
             self._sendMessages.append(msg.content)
         # Sending the hidden score message (DO NOT REMOVE)
-        if 'Our score is' in msg.content:
-            self.send_message(msg)
-        if 'Time left:' in msg.content:
+        if 'Our score is' in msg.content or 'Time left:' in msg.content or 'Fire duration' in msg.content or 'Victims rescued' in msg.content:
             self.send_message(msg)
 
         #if self.received_messages and self._sendMessages:
