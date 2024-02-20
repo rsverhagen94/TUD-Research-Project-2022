@@ -155,7 +155,7 @@ html {
     width: fit-content;
     margin-left: auto;
     margin-right: 10px;
-    max-width: 100%;
+    max-width: 90%;
 }
 
 .message_you:after {
@@ -182,7 +182,13 @@ html {
     width: fit-content;
     margin-left: 10px;
     color:black;
-    max-width: 100%;
+    max-width: 90%;
+}
+
+.center-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .message_other:after {
@@ -205,8 +211,8 @@ html {
 }
 
 h5 {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+  margin-top: 0.0em;
+  margin-bottom: 0.0em;
 }
 
 #chat {

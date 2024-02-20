@@ -518,7 +518,8 @@ function add_message(chatroom_ID, mssg) {
     mssg_content = mssg_content.replaceAll("stones", "<img src='/static/images/stone-small.svg' height= 40 width=40/>");
     mssg_content = mssg_content.replaceAll("tree", "<img src='/static/images/tree-fallen2.svg' height= 40 width=40/>");
 
-    mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' height=640 width=640/>");
+    mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' />");
+
 
     
 
@@ -549,13 +550,61 @@ function add_message(chatroom_ID, mssg) {
     if (mssg_content.includes("Victims rescued:")) {
         function victims() {
             const text = mssg_content.split(".").join("").split(" ").at(-1);
-            const newTime = 'Victims rescued: ' + text + ' minutes';
-            document.getElementById('victims').innerHTML = newTime;
+            const newVics = 'Victims rescued: ' + text;
+            document.getElementById('victims').innerHTML = newVics;
     
             // Assuming you have an <h6> element with id="fireResistance"
             document.getElementById('victims').innerHTML = `<img src='/static/images/victim_transparent.svg' width=25/> ${text}`;
         }
         victims();
+    }
+
+    if (mssg_content.includes("Smoke spreads:")) {
+        function smoke() {
+            const text = mssg_content.split(".").join("").split(" ").at(-1);
+            const newSmoke = 'Smoke spreads: ' + text;
+            document.getElementById('smoke').innerHTML = newSmoke;
+    
+            // Assuming you have an <h6> element with id="fireResistance"
+            document.getElementById('smoke').innerHTML = `<img src='/static/images/smoke_transparent.svg' width=69/> ${text}`;
+        }
+        smoke();
+    }
+
+    if (mssg_content.includes("Temperature:")) {
+        function temperature() {
+            const text = mssg_content.split(".").join("").split(" ").at(-1);
+            const newTemp = 'Temperature: ' + text;
+            document.getElementById('temperature').innerHTML = newTemp;
+    
+            // Assuming you have an <h6> element with id="fireResistance"
+            document.getElementById('temperature').innerHTML = `<img src='/static/images/celsius_transparent.svg' width=56/> ${text} thresh.`;
+        }
+        temperature();
+    }
+
+    if (mssg_content.includes("Location:")) {
+        function location() {
+            const text = mssg_content.split(".").join("").split(" ").at(-1);
+            const newLoc = 'Location: ' + text;
+            document.getElementById('location').innerHTML = newLoc;
+    
+            // Assuming you have an <h6> element with id="fireResistance"
+            document.getElementById('location').innerHTML = `<img src='/static/images/location_transparent.svg' width=44/> ${text}`;
+        }
+        location();
+    }
+
+    if (mssg_content.includes("Distance:")) {
+        function distance() {
+            const text = mssg_content.split(".").join("").split(" ").at(-1);
+            const newDist = 'Distance: ' + text;
+            document.getElementById('distance').innerHTML = newDist;
+    
+            // Assuming you have an <h6> element with id="fireResistance"
+            document.getElementById('distance').innerHTML = `<img src='/static/images/distance_transparent.svg' width=70/> ${text}`;
+        }
+        distance();
     }
 
     var div = document.createElement("div");
@@ -574,7 +623,7 @@ function add_message(chatroom_ID, mssg) {
     }
 
     // add the message text to the message div
-    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Time left:") && !mssg_content.includes("Fire duration:") && !mssg_content.includes("Victims rescued:")) {
+    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Time left:") && !mssg_content.includes("Fire duration:") && !mssg_content.includes("Victims rescued:") && !mssg_content.includes("Smoke spreads:") && !mssg_content.includes("Temperature:") && !mssg_content.includes("Distance:") && !mssg_content.includes("Location:")) {
     var content = document.createElement('span');
     content.className = "chat-content";
     content.innerHTML = mssg_content;

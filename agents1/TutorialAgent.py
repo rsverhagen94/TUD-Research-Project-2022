@@ -74,7 +74,12 @@ class TutorialAgent(BW4TBrain):
         self._hcn = 0
         self._count = 0
         self._score = 0 
-        self._timeLeft = 10
+        self._timeLeft = 90
+        self._smoke = 'normal'
+        self._temperature = '<≈'
+        #self._location = '✔'
+        self._location = '?'
+        self._distance = '?'
 
     def update_time(self):
         with self._counter_lock:
@@ -86,6 +91,10 @@ class TutorialAgent(BW4TBrain):
 
         self._sendMessage('Time left: ' + str(self._counter_value) + '.', 'RescueBot')
         self._sendMessage('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
+        self._sendMessage('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
+        self._sendMessage('Temperature: ' + self._temperature + '.', 'RescueBot')
+        self._sendMessage('Location: ' + self._location + '.', 'RescueBot')
+        self._sendMessage('Distance: ' + self._distance + '.', 'RescueBot')
 
         # Schedule the next print
         threading.Timer(6, self.update_time).start()
@@ -97,7 +106,7 @@ class TutorialAgent(BW4TBrain):
         print('Loading....')
         self._loadR2Py()
         self._counter_lock = threading.Lock()
-        self._counter_value = 11
+        self._counter_value = 91
         self._duration = 14
         # Start the initial print
         self.update_time()
@@ -158,6 +167,9 @@ class TutorialAgent(BW4TBrain):
 
         # CRUCIAL TO NOT REMOVE LINE BELOW!
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
+
+        #if self._timeLeft - self._counter_value == 10 and self._location == '?':
+        #    self._sendMessage('We still did not find the location of the fire source. ')
 
 
         while True:     
@@ -301,12 +313,15 @@ class TutorialAgent(BW4TBrain):
                 objects = []
                 agent_location = state[self.agent_id]['location']
                 for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                    #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
                         objects.append(info)
-                        self._sendMessage('fire is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Extinguish", "Continue" exploring, or call in a "Fire fighter" to help extinguishing. \n \n \
-                            Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - fire temperature: ' + str(int(info['visualization']['size']*300)) + ' degrees Celcius \
-                            \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - by myself extinguish time: ' + str(int(info['visualization']['size']*7.5)) + ' seconds \n - with help extinguish time: \
-                            ' + str(int(info['visualization']['size']*3.75)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                        #self._sendMessage('fire is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Extinguish", "Continue" exploring, or call in a "Fire fighter" to help extinguishing. \n \n \
+                        #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - fire temperature: ' + str(int(info['visualization']['size']*300)) + ' degrees Celcius \
+                        #    \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - by myself extinguish time: ' + str(int(info['visualization']['size']*7.5)) + ' seconds \n - with help extinguish time: \
+                        #    ' + str(int(info['visualization']['size']*3.75)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
+                        self._sendMessage('Found fire source!', 'Brutus')
+                        self._location = '✔'
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                             self._waiting = False
@@ -333,7 +348,7 @@ class TutorialAgent(BW4TBrain):
                         #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
                         #    + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
                         if self._count  < 1:
-                            self._sendMessage('I have found an injured victims who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n' + self._R2PyPlot(), 'Brutus')
+                            self._sendMessage('I have found an injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n' + self._R2PyPlotLocate('multiple',25,80,'close'), 'Brutus')
                             self._count+=1
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
@@ -685,11 +700,13 @@ class TutorialAgent(BW4TBrain):
 
     def _sendMessage(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
-        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content and 'Fire duration:' not in msg.content and 'Victims rescued:' not in msg.content:
+        if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content and 'Fire duration:' not in msg.content \
+        and 'Victims rescued:' not in msg.content and 'Smoke spreads:' not in msg.content and 'Temperature:' not in msg.content and 'Location:' not in msg.content and 'Distance:' not in msg.content:
             self.send_message(msg)
             self._sendMessages.append(msg.content)
         # Sending the hidden score message (DO NOT REMOVE)
-        if 'Our score is' in msg.content or 'Time left:' in msg.content or 'Fire duration' in msg.content or 'Victims rescued' in msg.content:
+        if 'Our score is' in msg.content or 'Time left:' in msg.content or 'Fire duration' in msg.content or 'Victims rescued' in msg.content or 'Smoke spreads' in msg.content \
+        or 'Temperature:' in msg.content or 'Location:' in msg.content or 'Distance' in msg.content:
             self.send_message(msg)
 
         #if self.received_messages and self._sendMessages:
@@ -744,13 +761,74 @@ class TutorialAgent(BW4TBrain):
             if explanation in self._providedExplanations and self._sendMessages[-1]!=mssg1:
                 self._sendMessage(mssg2,sender) 
 
-    #r2py_plot(situation, features)
-    #def _R2PyPlot(self, situation, features):
-    def _R2PyPlot(self):
-        duration = 15
-        resistance = 60
-        temperature = "higher"
-        distance = "large"
+    
+    def _R2PyPlotLocate(self, people, duration, resistance, temperature):
+        r_script = (f'''
+                    data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
+                    data$situation <- as.factor(data$situation)
+                    data$temperature <- as.factor(data$temperature)
+                    # CORRECT! PREDICT SENSITIVITY IN SITUATION 'SEND IN FIREFIGHTERS TO LOCATE FIRE OR NOT' BASED ON DURATION, RESISTANCE, TEMPERATURE, AND PEOPLE'
+                    data_s2 <- subset(data, data$situation=="2"|data$situation=="4")
+                    data_s2$people[data_s2$people == "0"] <- "none"
+                    data_s2$people[data_s2$people == "1"] <- "one"
+                    data_s2$people[data_s2$people == "10" |data_s2$people == "11" |data_s2$people == "2" |data_s2$people == "3" |data_s2$people == "4" |data_s2$people == "40" |data_s2$people == "5"] <- "multiple"
+                    data_s2 <- data_s2[data_s2$people != "clear",]
+                    data_s2$people <- factor(data_s2$people, levels = c("none","unclear","one","multiple"))
+                    data_s2 <- data_s2 %>% drop_na(duration)
+                    fit <- lm(sensitivity ~ people + duration + resistance + temperature, data = data_s2[-c(220,195,158,126,121,76),])
+                    # SHAP explanations
+                    pred_data2 <- subset(data_s2[-c(220,195,158,126,121,76),], select = c("people", "duration", "resistance", "temperature", "sensitivity"))
+                    explainer <- shapr(pred_data2, fit)
+                    p <- mean(pred_data2$sensitivity)
+                    new_data2 <- data.frame(resistance = c({resistance}),
+                                            temperature = c("{temperature}"),
+                                            people = c("{people}"),
+                                            duration = c({duration}))
+                    new_data2$temperature <- factor(new_data2$temperature, levels = c("close", "higher", "lower"))
+                    new_data2$people <- factor(new_data2$people, levels = c("none", "unclear", "one", "multiple"))
+                    
+                    new_pred <- predict(fit, new_data2)
+                    explanation_cat <- shapr::explain(new_data2, approach = "ctree", explainer = explainer, prediction_zero = p)
+
+                    # Shapley values
+                    shapley_values <- explanation_cat[["dt"]][,2:5]
+
+                    # Standardize Shapley values
+                    standardized_values <- shapley_values / sum(abs(shapley_values))
+                    explanation_cat[["dt"]][,2:5] <- standardized_values
+                    
+                    pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
+                    pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
+                    data_plot <- pl[["data"]]
+                    test <- 'min.'
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data2$duration, test), 
+                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data2$resistance), 
+                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", new_data2$temperature), 
+                    people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data2$people))
+                    data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
+                    pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
+                    plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
+                    panel.background = element_blank(),
+                    axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
+                    axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
+                    axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
+                    legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
+                    axis.ticks = element_line(color = "black"))
+                    dpi_web <- 300
+                    width_pixels <- 1600
+                    height_pixels <- 1600
+                    width_inches_web <- width_pixels / dpi_web
+                    height_inches_web <- height_pixels / dpi_web
+                    ggsave("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plot.svg", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
+                    ''')
+        robjects.r(r_script)
+        return 'plot'
+
+    def _R2PyPlotRescue(self, duration, resistance, temperature, distance):
+        #duration = 15
+        #resistance = 60
+        #temperature = "higher"
+        #distance = "large"
         r_script = (f'''
                     # CORRECT! PREDICT SENSITIVITY IN SITUATION 'SEND IN FIREFIGHTERS TO RESCUE OR NOT' BASED ON FIRE DURATION, FIRE RESISTANCE, TEMPERATURE WRT AUTO-IGNITION, AND DISTANCE VICTIM - FIRE 
                     data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")

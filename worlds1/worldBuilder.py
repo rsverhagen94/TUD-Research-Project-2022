@@ -95,7 +95,7 @@ def create_builder(exp_version, condition, task):
 
     # Create the goal
     if exp_version == "experiment":
-        goal = CollectionGoal(max_nr_ticks=600)
+        goal = CollectionGoal(max_nr_ticks=5400)
     if exp_version == "trial":
         goal = CollectionGoal(max_nr_ticks=10000000000)
     # Create our world builder
@@ -156,11 +156,12 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        builder.add_object((2,2), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
+        #builder.add_object((23,3), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
+        builder.add_object((2,3), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
         builder.add_object((9,2), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=5, weight=False)
         builder.add_object((2,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=15, weight=False)
         builder.add_object((1,9), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.25, percentage_lel=8, weight=False)
-        builder.add_object((9,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=200)
+        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=200)
         builder.add_object((2,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=400)
         builder.add_object((2,16),'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg",visualize_size=3.5, percentage_lel=35, weight=False)
         builder.add_object((9,17),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=0.75, percentage_lel=False, weight=100)
