@@ -13,7 +13,7 @@ from matrx.actions.object_actions import GrabObject, DropObject, RemoveObject
 from matrx.actions.move_actions import MoveNorth
 from matrx.messages.message import Message
 from matrx.messages.message_manager import MessageManager
-from actions1.customActions import Backup, RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop, Injured
+from actions1.customActions import Backup, RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop, Injured, AddObject
 
 class Phase(enum.Enum):
     START=1,
@@ -77,6 +77,7 @@ class TutorialAgent(BW4TBrain):
         self._timeLeft = 90
         self._smoke = 'normal'
         self._temperature = '<≈'
+        self._temperatureCat = 'close'
         #self._location = '✔'
         self._location = '?'
         self._distance = '?'
@@ -168,8 +169,22 @@ class TutorialAgent(BW4TBrain):
         # CRUCIAL TO NOT REMOVE LINE BELOW!
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
-        #if self._timeLeft - self._counter_value == 10 and self._location == '?':
-        #    self._sendMessage('We still did not find the location of the fire source. ')
+        if self._timeLeft - self._counter_value == 1 and self._location == '?':
+            self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in Firefighters to help locate the fire source or if sending them in is too dangerous. \
+                              I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                              + self._R2PyPlotLocate(self._totalVictimsCat,self._duration,self._counter_value,self._temperatureCat), 'Brutus')
+        if self._timeLeft - self._counter_value == 3 and self._location == '?':
+            self._sendMessage('Sending in Firefighters to help locate the fire source because the temperature is lower than the auto-ignition temperatures of present substances.', 'Brutus')
+            action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'fighter')
+            return AddObject.__name__, action_kwargs
+        if self._timeLeft - self._counter_value >= 5 and self._location == '?':
+            self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
+            for info in state.values():
+                if 'obj_id' in info.keys() and 'fighter' in info['obj_id']:
+                    return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500}
+            action_kwargs = add_object([(2,3)], "/images/fire2.svg", 2, 1, 'fire source')
+            self._location = '✔' 
+            return AddObject.__name__, action_kwargs
 
 
         while True:     
@@ -198,8 +213,16 @@ class TutorialAgent(BW4TBrain):
                     self._remaining = remaining
                 if not remainingZones:
                     return None,{}
-
-                self._sendMessage('Victims rescued: ' + str(len(self._collectedVictims)) + '/' + str(len(remainingVics)+len(self._collectedVictims)) + '.', 'RescueBot')
+                self._totalVictims = len(remainingVics) + len(self._collectedVictims)
+                if self._totalVictims == 0:
+                    self._totalVictimsCat = 'none'
+                if self._totalVictims == 1:
+                    self._totalVictimsCat = 'one'
+                if self._totalVictims == 'unknown':
+                    self._totalVictimsCat = 'unclear'
+                if self._totalVictims > 1:
+                    self._totalVictimsCat = 'multiple'
+                self._sendMessage('Victims rescued: ' + str(len(self._collectedVictims)) + '/' + str(self._totalVictims) + '.', 'RescueBot')
                 for vic in remainingVics:
                     if vic in self._foundVictims and vic not in self._todo:
                         self._goalVic = vic
@@ -348,7 +371,11 @@ class TutorialAgent(BW4TBrain):
                         #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
                         #    + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
                         if self._count  < 1:
-                            self._sendMessage('I have found an injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n' + self._R2PyPlotLocate('multiple',25,80,'close'), 'Brutus')
+                            #self._sendMessage('I have found an injured victim who I cannot evacuate to safety myself. \
+                            #                  We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
+                            #                  I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
+                            #                  This is how much each feature contributed to the predicted sensitivity: \n \n' \
+                            #                  + self._R2PyPlotLocate(self._totalVictimsCat,self._duration,self._counter_value,self._temperatureCat), 'Brutus')
                             self._count+=1
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
@@ -800,10 +827,20 @@ class TutorialAgent(BW4TBrain):
                     pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
                     pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
                     data_plot <- pl[["data"]]
-                    test <- 'min.'
-                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data2$duration, test), 
-                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data2$resistance), 
-                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", new_data2$temperature), 
+                    min <- 'min.'
+                    temp <- NA
+                    if ("{temperature}" == 'close') {{
+                        temp <- '<≈ thresh.'
+                    }}
+                    if ("{temperature}" == 'lower') {{
+                        temp <- '< thresh.'
+                    }}
+                    if ("{temperature}" == 'higher') {{
+                        temp <- '> thresh.'
+                    }}
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data2$duration, min), 
+                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data2$resistance, min), 
+                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", temp), 
                     people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data2$people))
                     data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
                     pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
@@ -942,3 +979,17 @@ class TutorialAgent(BW4TBrain):
                     library('grid')
                     ''')
         robjects.r(r_script)
+    
+def add_object(locs, image, size, opacity, name):
+    action_kwargs = {}
+    add_objects = []
+    for loc in locs:
+        obj_kwargs = {}
+        obj_kwargs['location'] = loc
+        obj_kwargs['img_name'] = image
+        obj_kwargs['visualize_size'] = size
+        obj_kwargs['visualize_opacity'] = opacity
+        obj_kwargs['name'] = name
+        add_objects+=[obj_kwargs]
+    action_kwargs['add_objects'] = add_objects
+    return action_kwargs
