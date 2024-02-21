@@ -1,4 +1,4 @@
-import sys, random, enum, ast, time, threading, os
+import sys, random, enum, ast, time, threading, os, math
 from datetime import datetime
 from flask import jsonify
 from rpy2 import robjects
@@ -83,6 +83,8 @@ class TutorialAgent(BW4TBrain):
         #self._location = '✔'
         self._location = '?'
         self._distance = '?'
+        self._plotGenerated = False
+        self._firefighterSearch = False
 
     def update_time(self):
         with self._counter_lock:
@@ -120,6 +122,8 @@ class TutorialAgent(BW4TBrain):
 
     def decide_on_bw4t_action(self, state:State):
         for info in state.values():
+            if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
+                print('Exact fire source location: ' + str(info['location']))
             if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
                 self._co = info['co_ppm']
                 self._hcn = info['hcn_ppm']
@@ -171,23 +175,27 @@ class TutorialAgent(BW4TBrain):
         # CRUCIAL TO NOT REMOVE LINE BELOW!
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
-        if self._timeLeft - self._counter_value == 1 and self._location == '?':
-            image_name = datetime.now().strftime("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_%Hh-%Mm_date_%dd-%mm-%Yy.svg")
+        if self._timeLeft - self._counter_value == 1 and self._location == '?' and not self._plotGenerated:
+            image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
             self._R2PyPlotLocate(self._totalVictimsCat, self._duration, self._counter_value, self._temperatureCat, image_name)
+            self._plotGenerated = True
             image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-            for i in range(0,1):
-                self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in Firefighters to help locate the fire source or if sending them in is too dangerous. \
-                                I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                + image_name, 'Brutus')
+            self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in Firefighters to help locate the fire source or if sending them in is too dangerous. \
+                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                            + image_name, 'Brutus')
+ 
         if self._timeLeft - self._counter_value == 3 and self._location == '?':
             self._sendMessage('Sending in Firefighters to help locate the fire source because the temperature is lower than the auto-ignition temperatures of present substances.', 'Brutus')
             action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'fighter')
             return AddObject.__name__, action_kwargs
-        if self._timeLeft - self._counter_value >= 5 and self._location == '?':
-            self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
+        
+        if self._timeLeft - self._counter_value == 4 and self._location == '?':
             for info in state.values():
                 if 'obj_id' in info.keys() and 'fighter' in info['obj_id']:
-                    return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500}
+                    return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':0}
+            
+        if self._timeLeft - self._counter_value >= 5 and self._location == '?':
+            self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
             action_kwargs = add_object([(2,3)], "/images/fire2.svg", 2, 1, 'fire source')
             self._location = '✔' 
             return AddObject.__name__, action_kwargs
@@ -197,14 +205,34 @@ class TutorialAgent(BW4TBrain):
                 self._locationCat = 'unknown'
             if self._location == '✔':
                 self._locationCat = 'known'
-            image_name = datetime.now().strftime("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_%Hh-%Mm_date_%dd-%mm-%Yy.svg")
+            image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
             self._R2PyPlotTactic(self._totalVictimsCat, self._locationCat, self._duration, self._counter_value, image_name)
+            self._plotGenerated = True
             image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-            for i in range(0,1):
-                self._sendMessage('My offensive inside deployment has been going on for 10 minutes now. We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
-                                I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                + image_name, 'Brutus')
-
+            self._sendMessage('My offensive inside deployment has been going on for 10 minutes now. We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
+                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                            + image_name, 'Brutus')
+                
+        if self._timeLeft - self._counter_value == 14:
+            image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
+            self._roomVics = ['mildly injured boy', 'mildly injured girl']
+            self._R2PyPlotPriority(len(self._roomVics), self._smoke, self._duration, self._locationCat, image_name)
+            self._plotGenerated = True
+            image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
+            self._sendMessage('I have found two mildly injured victims and fire in office 1. We should decide whether to first extinguish the fire or evacuate the victims. \
+                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                            + image_name, 'Brutus')
+            
+        if self._timeLeft - self._counter_value == 18 and self._distance != '?':   
+            image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
+            self._R2PyPlotRescue(self._duration, self._counter_value, self._temperatureCat, self._distanceCat)
+            self._plotGenerated = True
+            self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
+                              I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                              + image_name, 'Brutus')
+        else:
+            # CONTINUE HERE WHERE WE DON'T WANT THE R CODE TO BE CALLED CONTINUOUSLY DURING THE GAME SECOND & WE WANT TO CALCULATE DISTANCE FOR IF STATEMENT ABOVE
+            self.plotGenerated = False
 
         while True:     
             if Phase.START==self._phase:
@@ -729,21 +757,6 @@ class TutorialAgent(BW4TBrain):
             #    '. Found victims: ' +  ', '.join([i + ' in ' + self._foundVictimLocs[i]['room'] for i in self._foundVictimLocs]) ,'Brutus')
             #    self.received_messages=[]
 
-    def _trustBlief(self, member, received):
-        '''
-        Baseline implementation of a trust belief. Creates a dictionary with trust belief scores for each team member, for example based on the received messages.
-        '''
-        default = 0.5
-        trustBeliefs = {}
-        for member in received.keys():
-            trustBeliefs[member] = default
-        for member in received.keys():
-            for message in received[member]:
-                if 'Found' in message and 'colour' not in message:
-                    trustBeliefs[member]-=0.1
-                    break
-        return trustBeliefs
-
     def _sendMessage(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
         if msg.content not in self.received_messages_content and 'Our score is' not in msg.content and 'Time left:' not in msg.content and 'Fire duration:' not in msg.content \
@@ -774,38 +787,70 @@ class TutorialAgent(BW4TBrain):
                 dists[room]=utils.get_distance(agent_location,loc)
 
         return min(dists,key=dists.get)
+    
+    def _R2PyPlotPriority(self, people, smoke, duration, location, image_name):
+        r_script = (f'''
+                    data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
+                    data$situation <- as.factor(data$situation)
+                    data$location <- as.factor(data$location)
+                    data$smoke <- as.factor(data$smoke)
+                    data_s3 <- subset(data, data$situation=="3"|data$situation=="6")
+                    data_s3 <- data_s3[data_s3$smoke != "pushing out",]
+                    data_s3$people <- as.numeric(data_s3$people)
+                    fit <- lm(sensitivity ~ people + duration + smoke + location, data = data_s3[-c(244,242,211,162,96,92,29),])
+                    pred_data3 <- subset(data_s3[-c(244,242,211,162,96,92,29),], select = c("people", "duration", "smoke", "location", "sensitivity"))
+                    pred_data3$smoke <- factor(pred_data3$smoke, levels = c("fast", "normal", "slow"))
+                    explainer <- shapr(pred_data3, fit)
+                    p <- mean(pred_data3$sensitivity)
+                    new_data3 <- data.frame(people = c({people}),
+                                        duration = c({duration}),
+                                        smoke = c("{smoke}"),
+                                        location = c("{location}"))
+                    new_data3$smoke <- factor(new_data3$smoke, levels = c("fast", "normal", "slow"))
+                    new_data3$location <- factor(new_data3$location, levels = c("known", "unknown"))
+                    new_pred <- predict(fit, new_data3)
+                    explanation_cat <- shapr::explain(new_data3, approach = "ctree", explainer = explainer, prediction_zero = p)
 
-    def _efficientSearch(self, tiles):
-        x=[]
-        y=[]
-        for i in tiles:
-            if i[0] not in x:
-                x.append(i[0])
-            if i[1] not in y:
-                y.append(i[1])
-        locs = []
-        for i in range(len(x)):
-            if i%2==0:
-                locs.append((x[i],min(y)))
-            else:
-                locs.append((x[i],max(y)))
-        return locs
+                    # Shapley values
+                    shapley_values <- explanation_cat[["dt"]][,2:5]
 
-    def _dynamicMessage(self, mssg1, mssg2, explanation, sender):
-        if explanation not in self._providedExplanations:
-            self._sendMessage(mssg1,sender)
-            self._providedExplanations.append(explanation)
-        if 'Searching' in mssg1:
-            #history = ['Searching' in mssg for mssg in self._sendMessages]
-            if explanation in self._providedExplanations and mssg1 not in self._sendMessages[-5:]:
-                self._sendMessage(mssg2,sender)   
-        if 'Found' in mssg1:
-            history = [mssg2[:-1] in mssg for mssg in self._sendMessages]
-            if explanation in self._providedExplanations and True not in history:
-                self._sendMessage(mssg2,sender)      
-        if 'Searching' not in mssg1 and 'Found' not in mssg1:
-            if explanation in self._providedExplanations and self._sendMessages[-1]!=mssg1:
-                self._sendMessage(mssg2,sender) 
+                    # Standardize Shapley values
+                    standardized_values <- shapley_values / sum(abs(shapley_values))
+                    explanation_cat[["dt"]][,2:5] <- standardized_values
+                    
+                    pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
+                    pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
+                    data_plot <- pl[["data"]]
+                    min <- 'min.'
+                    loc <- NA
+                    if ("{location}" == 'known') {{
+                        loc <- '✔'
+                    }}
+                    if ("{location}" == 'unknown') {{
+                        loc <- '?'
+                    }}
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data3$duration, min), 
+                    smoke = paste("<img src='/home/ruben/xai4mhc/Icons/smoke_speed_black.png' width='65' /><br>\n", new_data3$smoke), 
+                    location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='43' /><br>\n", loc), 
+                    people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data3$people))
+                    data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
+                    pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
+                    plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
+                    panel.background = element_blank(),
+                    axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
+                    axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
+                    axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
+                    legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
+                    axis.ticks = element_line(color = "black"))
+                    dpi_web <- 300
+                    width_pixels <- 1600
+                    height_pixels <- 1600
+                    width_inches_web <- width_pixels / dpi_web
+                    height_inches_web <- height_pixels / dpi_web
+                    ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
+                    ''')
+        robjects.r(r_script)
+
 
     def _R2PyPlotTactic(self, people, location, duration, resistance, image_name):
         r_script = (f'''
@@ -943,10 +988,6 @@ class TutorialAgent(BW4TBrain):
         robjects.r(r_script)
 
     def _R2PyPlotRescue(self, duration, resistance, temperature, distance):
-        #duration = 15
-        #resistance = 60
-        #temperature = "higher"
-        #distance = "large"
         r_script = (f'''
                     # CORRECT! PREDICT SENSITIVITY IN SITUATION 'SEND IN FIREFIGHTERS TO RESCUE OR NOT' BASED ON FIRE DURATION, FIRE RESISTANCE, TEMPERATURE WRT AUTO-IGNITION, AND DISTANCE VICTIM - FIRE 
                     data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
@@ -1074,3 +1115,16 @@ def add_object(locs, image, size, opacity, name):
         add_objects+=[obj_kwargs]
     action_kwargs['add_objects'] = add_objects
     return action_kwargs
+
+def calculate_distances(p1, p2):
+    # Unpack the coordinates
+    x1, y1 = p1
+    x2, y2 = p2
+    
+    # Euclidean distance
+    euclidean_distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    
+    # Manhattan distance
+    manhattan_distance = abs(x2 - x1) + abs(y2 - y1)
+    
+    return euclidean_distance, manhattan_distance
