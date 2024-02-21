@@ -1,4 +1,6 @@
-import sys, random, enum, ast, time, threading
+import sys, random, enum, ast, time, threading, os
+from datetime import datetime
+from flask import jsonify
 from rpy2 import robjects
 from matrx import grid_world
 from brains1.BW4TBrain import BW4TBrain
@@ -170,9 +172,13 @@ class TutorialAgent(BW4TBrain):
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
         if self._timeLeft - self._counter_value == 1 and self._location == '?':
-            self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in Firefighters to help locate the fire source or if sending them in is too dangerous. \
-                              I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                              + self._R2PyPlotLocate(self._totalVictimsCat,self._duration,self._counter_value,self._temperatureCat), 'Brutus')
+            image_name = datetime.now().strftime("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_%Hh-%Mm_date_%dd-%mm-%Yy.svg")
+            self._R2PyPlotLocate(self._totalVictimsCat, self._duration, self._counter_value, self._temperatureCat, image_name)
+            image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
+            for i in range(0,1):
+                self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in Firefighters to help locate the fire source or if sending them in is too dangerous. \
+                                I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                + image_name, 'Brutus')
         if self._timeLeft - self._counter_value == 3 and self._location == '?':
             self._sendMessage('Sending in Firefighters to help locate the fire source because the temperature is lower than the auto-ignition temperatures of present substances.', 'Brutus')
             action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'fighter')
@@ -185,6 +191,19 @@ class TutorialAgent(BW4TBrain):
             action_kwargs = add_object([(2,3)], "/images/fire2.svg", 2, 1, 'fire source')
             self._location = '✔' 
             return AddObject.__name__, action_kwargs
+        
+        if self._timeLeft - self._counter_value == 10:
+            if self._location == '?':
+                self._locationCat = 'unknown'
+            if self._location == '✔':
+                self._locationCat = 'known'
+            image_name = datetime.now().strftime("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_%Hh-%Mm_date_%dd-%mm-%Yy.svg")
+            self._R2PyPlotTactic(self._totalVictimsCat, self._locationCat, self._duration, self._counter_value, image_name)
+            image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
+            for i in range(0,1):
+                self._sendMessage('My offensive inside deployment has been going on for 10 minutes now. We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
+                                I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                + image_name, 'Brutus')
 
 
         while True:     
@@ -788,8 +807,71 @@ class TutorialAgent(BW4TBrain):
             if explanation in self._providedExplanations and self._sendMessages[-1]!=mssg1:
                 self._sendMessage(mssg2,sender) 
 
+    def _R2PyPlotTactic(self, people, location, duration, resistance, image_name):
+        r_script = (f'''
+                    data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
+                    data$situation <- as.factor(data$situation)
+                    data$location <- as.factor(data$location)
+                    data_s4 <- subset(data, data$situation=="5"|data$situation=="7")
+                    data_s4$people[data_s4$people == "0"] <- "none"
+                    data_s4$people[data_s4$people == "1"] <- "one"
+                    data_s4$people[data_s4$people == "10" |data_s4$people == "11" |data_s4$people == "2" |data_s4$people == "3" |data_s4$people == "4" |data_s4$people == "5"] <- "multiple"
+                    data_s4 <- data_s4[data_s4$people != "clear",]
+                    data_s4$people <- factor(data_s4$people, levels = c("none","unclear","one","multiple"))
+                    fit <- lm(sensitivity ~ people + duration + resistance + location, data = data_s4[-c(266,244,186,178,126,111,97,44,19),])
+                    pred_data4 <- subset(data_s4[-c(266,244,186,178,126,111,97,44,19),], select = c("people", "duration", "resistance", "location", "sensitivity"))
+                    explainer <- shapr(pred_data4, fit)
+                    p <- mean(pred_data4$sensitivity)
+                    new_data4 <- data.frame(people = c("{people}"),
+                                            duration = c({duration}),
+                                            resistance = c({resistance}),
+                                            location = c("{location}"))
+                    new_data4$people <- factor(new_data4$people, levels = c("none", "unclear", "one", "multiple"))
+                    new_data4$location <- factor(new_data4$location, levels = c("known", "unknown"))
+                    new_pred <- predict(fit, new_data4)
+                    explanation_cat <- shapr::explain(new_data4, approach = "ctree", explainer = explainer, prediction_zero = p)
+                    # Shapley values
+                    shapley_values <- explanation_cat[["dt"]][,2:5]
+
+                    # Standardize Shapley values
+                    standardized_values <- shapley_values / sum(abs(shapley_values))
+                    explanation_cat[["dt"]][,2:5] <- standardized_values
+                    
+                    pl <- plot(explanation_cat, digits = 1, plot_phi0 = FALSE) 
+                    pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
+                    data_plot <- pl[["data"]]
+                    min <- 'min.'
+                    loc <- NA
+                    if ("{location}" == 'known') {{
+                        loc <- '✔'
+                    }}
+                    if ("{location}" == 'unknown') {{
+                        loc <- '?'
+                    }}
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data4$duration, min), 
+                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data4$resistance, min), 
+                    location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='43' /><br>\n", loc), 
+                    people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data4$people))
+                    data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
+                    pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
+                    plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
+                    panel.background = element_blank(),
+                    axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
+                    axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
+                    axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
+                    legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
+                    axis.ticks = element_line(color = "black"))
+                    dpi_web <- 300
+                    width_pixels <- 1600
+                    height_pixels <- 1600
+                    width_inches_web <- width_pixels / dpi_web
+                    height_inches_web <- height_pixels / dpi_web
+                    ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
+                    ''')
+        robjects.r(r_script)
+
     
-    def _R2PyPlotLocate(self, people, duration, resistance, temperature):
+    def _R2PyPlotLocate(self, people, duration, resistance, temperature, image_name):
         r_script = (f'''
                     data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
                     data$situation <- as.factor(data$situation)
@@ -856,10 +938,9 @@ class TutorialAgent(BW4TBrain):
                     height_pixels <- 1600
                     width_inches_web <- width_pixels / dpi_web
                     height_inches_web <- height_pixels / dpi_web
-                    ggsave("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plot.svg", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
+                    ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                     ''')
         robjects.r(r_script)
-        return 'plot'
 
     def _R2PyPlotRescue(self, duration, resistance, temperature, distance):
         #duration = 15

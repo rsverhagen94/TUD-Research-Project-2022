@@ -518,7 +518,7 @@ function add_message(chatroom_ID, mssg) {
     mssg_content = mssg_content.replaceAll("stones", "<img src='/static/images/stone-small.svg' height= 40 width=40/>");
     mssg_content = mssg_content.replaceAll("tree", "<img src='/static/images/tree-fallen2.svg' height= 40 width=40/>");
 
-    mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' />");
+    // mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' />");
 
 
     
