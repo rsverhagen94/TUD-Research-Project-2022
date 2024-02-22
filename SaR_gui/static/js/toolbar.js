@@ -635,8 +635,30 @@ function add_message(chatroom_ID, mssg) {
     
     // scroll to the new message
 //    scrollSmoothToBottom(mssgs_container)
-    scrollToBottom(mssgs_container);
+    handleScrollAfterImageLoad(div, mssgs_container);   
 }
+}
+
+function handleScrollAfterImageLoad(div, container) {
+    // Find all images within the message div
+    var images = div.getElementsByTagName('img');
+    var loadedImages = 0;
+
+    if (images.length === 0) {
+        // If there are no images, scroll immediately
+        scrollToBottom(container);
+    } else {
+        // Add onload event listeners to images
+        for (var i = 0; i < images.length; i++) {
+            images[i].onload = function() {
+                loadedImages++;
+                if (loadedImages === images.length) {
+                    // All images are loaded, now scroll
+                    scrollToBottom(container);
+                }
+            };
+        }
+    }
 }
 
 /**
@@ -651,8 +673,8 @@ function scrollSmoothToBottom (div) {
 /**
  * Scroll directly to the end of a div
  */
-function scrollToBottom (div) {
-   div.scrollTo(0, div.scrollHeight);
+function scrollToBottom(div) {
+    div.scrollTop = div.scrollHeight;
 }
 
 /*

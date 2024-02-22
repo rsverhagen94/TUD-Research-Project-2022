@@ -84,7 +84,7 @@ class TutorialAgent(BW4TBrain):
         self._location = '?'
         self._distance = '?'
         self._plotGenerated = False
-        self._firefighterSearch = False
+        self._fireCoords = None
 
     def update_time(self):
         with self._counter_lock:
@@ -121,12 +121,16 @@ class TutorialAgent(BW4TBrain):
         return state
 
     def decide_on_bw4t_action(self, state:State):
-        for info in state.values():
-            if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
-                print('Exact fire source location: ' + str(info['location']))
-            if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
-                self._co = info['co_ppm']
-                self._hcn = info['hcn_ppm']
+        if self._location == '✔':
+            for info in state.values():
+                if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
+                    #print('Exact fire source location: ' + str(info['location']))
+                    self._fireCoords = info['location']
+
+
+                #if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
+                    #self._co = info['co_ppm']
+                    #self._hcn = info['hcn_ppm']
         if not state[{'class_inheritance':'SmokeObject'}]:
             self._co = 0
             self._hcn = 0
@@ -200,7 +204,7 @@ class TutorialAgent(BW4TBrain):
             self._location = '✔' 
             return AddObject.__name__, action_kwargs
         
-        if self._timeLeft - self._counter_value == 10:
+        if self._timeLeft - self._counter_value == 7 and not self._plotGenerated:
             if self._location == '?':
                 self._locationCat = 'unknown'
             if self._location == '✔':
@@ -213,7 +217,7 @@ class TutorialAgent(BW4TBrain):
                             I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                             + image_name, 'Brutus')
                 
-        if self._timeLeft - self._counter_value == 14:
+        if self._timeLeft - self._counter_value == 9 and not self._plotGenerated:
             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
             self._roomVics = ['mildly injured boy', 'mildly injured girl']
             self._R2PyPlotPriority(len(self._roomVics), self._smoke, self._duration, self._locationCat, image_name)
@@ -223,16 +227,25 @@ class TutorialAgent(BW4TBrain):
                             I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                             + image_name, 'Brutus')
             
-        if self._timeLeft - self._counter_value == 18 and self._distance != '?':   
+        if self._timeLeft - self._counter_value == 11 and not self._plotGenerated:   
             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
+            #self._foundVictimLocs[self._goalVic]['location']
+            #self._foundVictimLocs['critically injured girl']['location'] =  (10, 2)
+            distance = calculate_distances(self._fireCoords, (10, 2))
+            print(distance)
+            if distance < 14:
+                self._distanceCat = 'small'
+            if distance >= 14:
+                self._distanceCat = 'large'
+            print(self._distanceCat)
             self._R2PyPlotRescue(self._duration, self._counter_value, self._temperatureCat, self._distanceCat)
             self._plotGenerated = True
-            self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
-                              I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                              + image_name, 'Brutus')
-        else:
-            # CONTINUE HERE WHERE WE DON'T WANT THE R CODE TO BE CALLED CONTINUOUSLY DURING THE GAME SECOND & WE WANT TO CALCULATE DISTANCE FOR IF STATEMENT ABOVE
-            self.plotGenerated = False
+            #self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
+            #                  I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+            #                  + image_name, 'Brutus')
+
+        if self._timeLeft - self._counter_value not in [11,9,7,1]: #replace by list keeping track of all times where plots are send
+            self._plotGenerated = False
 
         while True:     
             if Phase.START==self._phase:
@@ -1127,4 +1140,4 @@ def calculate_distances(p1, p2):
     # Manhattan distance
     manhattan_distance = abs(x2 - x1) + abs(y2 - y1)
     
-    return euclidean_distance, manhattan_distance
+    return euclidean_distance
