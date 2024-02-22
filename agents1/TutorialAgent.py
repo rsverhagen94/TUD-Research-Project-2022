@@ -231,18 +231,21 @@ class TutorialAgent(BW4TBrain):
             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
             #self._foundVictimLocs[self._goalVic]['location']
             #self._foundVictimLocs['critically injured girl']['location'] =  (10, 2)
-            distance = calculate_distances(self._fireCoords, (10, 2))
-            print(distance)
+            distance = calculate_distances(self._fireCoords, (10, 16))
             if distance < 14:
-                self._distanceCat = 'small'
+                self._distance = 'small'
             if distance >= 14:
-                self._distanceCat = 'large'
-            print(self._distanceCat)
-            self._R2PyPlotRescue(self._duration, self._counter_value, self._temperatureCat, self._distanceCat)
+                self._distance = 'large'
+            if self._temperatureCat == 'close' or self._temperatureCat == 'lower':
+                temperature = 'lower'
+            if self._temperatureCat == 'higher':
+                temperature = 'higher'
+            self._R2PyPlotRescue(self._duration, self._counter_value, temperature, self._distance, image_name)
             self._plotGenerated = True
-            #self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
-            #                  I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-            #                  + image_name, 'Brutus')
+            image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
+            self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
+                              I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                              + image_name, 'Brutus')
 
         if self._timeLeft - self._counter_value not in [11,9,7,1]: #replace by list keeping track of all times where plots are send
             self._plotGenerated = False
@@ -1000,21 +1003,13 @@ class TutorialAgent(BW4TBrain):
                     ''')
         robjects.r(r_script)
 
-    def _R2PyPlotRescue(self, duration, resistance, temperature, distance):
+    def _R2PyPlotRescue(self, duration, resistance, temperature, distance, image_name):
         r_script = (f'''
                     # CORRECT! PREDICT SENSITIVITY IN SITUATION 'SEND IN FIREFIGHTERS TO RESCUE OR NOT' BASED ON FIRE DURATION, FIRE RESISTANCE, TEMPERATURE WRT AUTO-IGNITION, AND DISTANCE VICTIM - FIRE 
                     data <- read_excel("/home/ruben/Downloads/moral sensitivity survey data 4.xlsx")
-                    data$bin <- as.factor(data$bin)
-                    data$gender <- as.factor(data$gender)
-                    data$age <- as.factor(data$age)
-                    data$culture <- as.factor(data$culture)
-                    data$education <- as.factor(data$education)
-                    data$discipline <- as.factor(data$discipline)
                     data$situation <- as.factor(data$situation)
                     data$temperature <- as.factor(data$temperature)
                     data$distance <- as.factor(data$distance)
-                    data$smoke <- as.factor(data$smoke)
-                    data$location <- as.factor(data$location)
                     data_subset <- subset(data, data$situation=="1"|data$situation=="8")
                     data_subset$people <- as.numeric(data_subset$people)
                     data_subset <- subset(data_subset, (!data_subset$temperature=="close"))
@@ -1027,7 +1022,6 @@ class TutorialAgent(BW4TBrain):
                     pred_data$temperature <- factor(pred_data$temperature, levels = c("higher", "lower"))
                     explainer <- shapr(pred_data, fit)
                     p <- mean(pred_data$sensitivity)
-                       
                     new_data <- data.frame(duration = c({duration}), 
                                             resistance = c({resistance}),
                                             temperature = c("{temperature}"),
@@ -1049,10 +1043,21 @@ class TutorialAgent(BW4TBrain):
                     pl[["data"]]$header <- paste("predicted sensitivity = ", round(new_pred, 1), sep = " ")
                     levels(pl[["data"]]$sign) <- c("positive", "negative")
                     data_plot <- pl[["data"]]
-                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='57' /><br>\n", new_data$duration), 
-                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='71' /><br>\n", new_data$resistance), 
-                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='79' /><br>\n", new_data$temperature), 
-                    distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='100' /><br>\n", new_data$distance))
+                    min <- 'min.'
+                    temp <- NA
+                    if ("{temperature}" == 'close') {{
+                        temp <- '<≈ thresh.'
+                    }}
+                    if ("{temperature}" == 'lower') {{
+                        temp <- '< thresh.'
+                    }}
+                    if ("{temperature}" == 'higher') {{
+                        temp <- '> thresh.'
+                    }}
+                    labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
+                    resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data$resistance, min), 
+                    temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", temp), 
+                    distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='67' /><br>\n", new_data$distance))
                     data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
                     pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
                     plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
@@ -1060,12 +1065,16 @@ class TutorialAgent(BW4TBrain):
                     axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
                     axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
                     axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
-                    legend.position ="bottom",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
+                    legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
                     axis.ticks = element_line(color = "black"))
-                    ggsave("/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plot.svg", pl)
+                    dpi_web <- 300
+                    width_pixels <- 1600
+                    height_pixels <- 1600
+                    width_inches_web <- width_pixels / dpi_web
+                    height_inches_web <- height_pixels / dpi_web
+                    ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                     ''')
         robjects.r(r_script)
-        return 'plot'
     
     # move to utils file and call once when running main.py
     def _loadR2Py(self):
