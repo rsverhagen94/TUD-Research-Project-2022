@@ -614,8 +614,11 @@ class BW4TAgentBrain(AgentBrain):
             received_message = mssg.content
 
             # Add the message object to the received messages
-            self.received_messages.append(mssg)
-            self.received_messages_content.append(mssg.content)
+            if 'Our score is' not in mssg.content and 'Time left' not in mssg.content and 'Fire duration' not in mssg.content \
+            and 'Victims rescued' not in mssg.content and 'Smoke spreads' not in mssg.content and 'Temperature' not in mssg.content \
+            and 'Location' not in mssg.content and 'Distance' not in mssg.content:
+                self.received_messages.append(mssg)
+                self.received_messages_content.append(mssg.content)
 
 
     def _init_state(self):

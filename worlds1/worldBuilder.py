@@ -16,6 +16,7 @@ from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
 from agents1.BaselineAgent import BaselineAgent
 from agents1.TutorialAgent import TutorialAgent
+from agents1.TimerAgent import TimerAgent
 from actions1.customActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
 from loggers.action_logger import ActionLogger
@@ -25,7 +26,19 @@ from loggers.message_logger import MessageLogger
 tick_duration = 0.1
 random_seed = 1
 verbose = False
+#key_action_map = {
+#    }
 key_action_map = {
+        'ArrowUp': MoveNorth.__name__,
+        'ArrowRight': MoveEast.__name__,
+        'ArrowDown': MoveSouth.__name__,
+        'ArrowLeft': MoveWest.__name__,
+        'q': CarryObject.__name__,
+        'w': Drop.__name__,
+        'd': RemoveObjectTogether.__name__,
+        'a': CarryObjectTogether.__name__,
+        's': DropObjectTogether.__name__,
+        'e': RemoveObject.__name__,
     }
 
 # Some settings
@@ -71,6 +84,7 @@ def add_agents(builder, condition, exp_version):
             #    brain = BaselineAgent(slowdown=8)
             if exp_version=="experiment" and condition=="baseline":
                 brain = TutorialAgent(slowdown=4)
+                brain2 = TimerAgent(slowdown=4)
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -78,6 +92,9 @@ def add_agents(builder, condition, exp_version):
                 loc = (16,8)
             builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
+            builder.add_agent((24,11), brain2, team=team_name, name="TimerAgent", customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0, 
+                              sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_opacity=0)
+
 
         # Add human agents
         for human_agent_nr in range(human_agents_per_team):
@@ -86,8 +103,9 @@ def add_agents(builder, condition, exp_version):
                 loc = (24,13)
             else:
                 loc = (16,9)
-            builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=0,
-                                    key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
+            builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=1,#change opacity to 0
+                                    #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
+                                    key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
 
 def create_builder(exp_version, condition, task):
     # Set numpy's random generator
@@ -156,20 +174,31 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        #builder.add_object((23,3), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
-        #builder.add_object((2,3), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=9, weight=False)
-        
+        builder.add_object((2,8), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
+        builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+        for i in [(2,6),(1,6),(0,6),(3,6),(3,5),(3,4),(2,5),(2,4),(1,5),(1,4),(0,5),(0,4),(4,6),(4,5),(4,4)]:
+            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+
+        builder.add_object((16,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
+        builder.add_object(location=(16,21),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+        for i in [(16,19),(15,19),(14,19),(17,19),(17,18),(17,20),(16,18),(16,20),(15,18),(15,20),(14,18),(14,20),(18,19),(18,18),(18,20)]:
+            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))        
+
+        builder.add_object((16,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
+        builder.add_object((9,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False) 
         builder.add_object((2,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
         builder.add_object((9,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
         builder.add_object(location=(10,1),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=125)
-        builder.add_object((9,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=125)
+        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
+        builder.add_object((9,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
         builder.add_object((16,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
         builder.add_object((2,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
         builder.add_object((9,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
         builder.add_object((9,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
         builder.add_object(location=(10,22),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((16,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1.25, percentage_lel=False, weight=125)
+        builder.add_object((9,17),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
+        builder.add_object((16,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
+        builder.add_object(location=(17,15),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
     
         #builder.add_object((2,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=15, weight=False)
         #builder.add_object((1,9), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.25, percentage_lel=8, weight=False)
