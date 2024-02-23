@@ -19,27 +19,22 @@ from actions1.customActions import Backup, RemoveObjectTogether, CarryObjectToge
 
 class Phase(enum.Enum):
     START=1,
-    INJURED=9,
-    BACKUP2=10,
-    BACKUP=11,
-    FIND_NEXT_GOAL=12,
-    PICK_UNSEARCHED_ROOM=13,
-    PLAN_PATH_TO_ROOM=14,
-    FOLLOW_PATH_TO_ROOM=15,
-    PLAN_ROOM_SEARCH_PATH=16,
-    FOLLOW_ROOM_SEARCH_PATH=17,
-    PLAN_PATH_TO_VICTIM=18,
-    FOLLOW_PATH_TO_VICTIM=19,
-    TAKE_VICTIM=20,
-    PLAN_PATH_TO_DROPPOINT=21,
-    FOLLOW_PATH_TO_DROPPOINT=22,
-    DROP_VICTIM=23,
-    WAIT_FOR_HUMAN=24,
-    WAIT_AT_ZONE=25,
-    FIX_ORDER_GRAB=26,
-    FIX_ORDER_DROP=27,
-    REMOVE_OBSTACLE_IF_NEEDED=28,
-    ENTER_ROOM=29
+    FIND_NEXT_GOAL=2,
+    PICK_UNSEARCHED_ROOM=3,
+    PLAN_PATH_TO_ROOM=4,
+    FOLLOW_PATH_TO_ROOM=5,
+    REMOVE_OBSTACLE_IF_NEEDED=6,
+    ENTER_ROOM=7,
+    PLAN_ROOM_SEARCH_PATH=8,
+    FOLLOW_ROOM_SEARCH_PATH=9,
+    PLAN_PATH_TO_VICTIM=10,
+    FOLLOW_PATH_TO_VICTIM=11,
+    TAKE_VICTIM=12,
+    PLAN_PATH_TO_DROPPOINT=13,
+    FOLLOW_PATH_TO_DROPPOINT=14,
+    DROP_VICTIM=15,
+    BACKUP=16,
+    BACKUP2=17
     
 class TutorialAgent(BW4TBrain):
     def __init__(self, slowdown:int):
@@ -51,36 +46,23 @@ class TutorialAgent(BW4TBrain):
         self._foundVictims = []
         self._collectedVictims = []
         self._foundVictimLocs = {}
-        self._maxTicks = 9600
         self._sendMessages = []
-        self._currentDoor=None 
-        #self._condition = condition
-        self._providedExplanations = []   
+        self._currentDoor=None  
         self._teamMembers = []
         self._carryingTogether = False
         self._remove = False
         self._goalVic = None
         self._goalLoc = None
-        self._second = None
         self._criticalRescued = 0
-        self._humanLoc = None
-        self._distanceHuman = None
-        self._distanceDrop = None
-        self._agentLoc = None
         self._todo = []
         self._answered = False
         self._tosearch = []
-        self._tutorial = True
-        self._decided = False
         self._co = 0
         self._hcn = 0
-        self._count = 0
-        self._score = 0 
         self._timeLeft = 90
         self._smoke = 'normal'
         self._temperature = '<≈'
         self._temperatureCat = 'close'
-        #self._location = '✔'
         self._location = '?'
         self._distance = '?'
         self._plotGenerated = False
@@ -93,38 +75,36 @@ class TutorialAgent(BW4TBrain):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, 
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)
-        print('Loading....')
         self._loadR2Py()
         
 
     def filter_bw4t_observations(self, state):
-        #self._processMessages(state)
         return state
 
     def decide_on_bw4t_action(self, state:State):
-        print(self._phase)
         for i in self.received_messages_content:
             if 'Time left' in i:
                 self._counter_value = int(i.strip('.').split()[-1])
             if 'duration' in i:
                 self._duration = int(i.strip('.').split()[-1])
+
         self._sendMessage('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
         self._sendMessage('Temperature: ' + self._temperature + '.', 'RescueBot')
         self._sendMessage('Location: ' + self._location + '.', 'RescueBot')
         self._sendMessage('Distance: ' + self._distance + '.', 'RescueBot')
+
         if self._location == '✔':
             for info in state.values():
                 if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
-                    #print('Exact fire source location: ' + str(info['location']))
                     self._fireCoords = info['location']
-
-
                 #if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance']:
                     #self._co = info['co_ppm']
                     #self._hcn = info['hcn_ppm']
+
         if not state[{'class_inheritance':'SmokeObject'}]:
             self._co = 0
             self._hcn = 0
+
         self._criticalFound = 0
         for vic in self._foundVictims:
             if 'critical' in vic:
@@ -134,23 +114,6 @@ class TutorialAgent(BW4TBrain):
             self._locationCat = 'unknown'
         if self._location == '✔':
             self._locationCat = 'known'
-        
-        if state[{'is_human_agent':True}]:
-            self._distanceHuman = 'close'
-        if not state[{'is_human_agent':True}]: 
-            if self._agentLoc in [1,2,3,4,5,6,7] and self._humanLoc in [8,9,10,11,12,13,14]:
-                self._distanceHuman = 'far'
-            if self._agentLoc in [1,2,3,4,5,6,7] and self._humanLoc in [1,2,3,4,5,6,7]:
-                self._distanceHuman = 'close'
-            if self._agentLoc in [8,9,10,11,12,13,14] and self._humanLoc in [1,2,3,4,5,6,7]:
-                self._distanceHuman = 'far'
-            if self._agentLoc in [8,9,10,11,12,13,14] and self._humanLoc in [8,9,10,11,12,13,14]:
-                self._distanceHuman = 'close'
-
-        if self._agentLoc in [1,2,5,6,8,9,11,12]:
-            self._distanceDrop = 'far'
-        if self._agentLoc in [3,4,7,10,13,14]:
-            self._distanceDrop = 'close'
 
         self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
 
@@ -162,6 +125,7 @@ class TutorialAgent(BW4TBrain):
                 self._carryingTogether = False
         if self._carryingTogether == True:
             return None, {}
+        
         agent_name = state[self.agent_id]['obj_id']
         # Add team members
         for member in state['World']['team_members']:
@@ -169,11 +133,6 @@ class TutorialAgent(BW4TBrain):
                 self._teamMembers.append(member)       
         # Process messages from team members
         self._processMessages(state, self._teamMembers)
-        # Update trust beliefs for team members
-        #self._trustBlief(self._teamMembers, receivedMessages)
-
-        # CRUCIAL TO NOT REMOVE LINE BELOW!
-        self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
         if self._timeLeft - self._counter_value == 10 and self._location == '?' and not self._plotGenerated:
             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
@@ -247,8 +206,6 @@ class TutorialAgent(BW4TBrain):
             self._plotGenerated = False
 
         while True:     
-            if self.received_messages_content:
-                print(self.received_messages_content[-1])
             if Phase.START==self._phase:
                 self._phase=Phase.FIND_NEXT_GOAL
                 return Idle.__name__,{'duration_in_ticks':50}
@@ -267,6 +224,7 @@ class TutorialAgent(BW4TBrain):
                         remainingZones.append(info)
                         remainingVics.append(str(info['img_name'])[8:-4])
                         remaining[str(info['img_name'])[8:-4]] = info['location']
+                # CONTINUE REFACTORING HERE!
                 if remainingZones:
                     #self._goalVic = str(remainingZones[0]['img_name'])[8:-4]
                     #self._goalLoc = remainingZones[0]['location']
@@ -477,26 +435,19 @@ class TutorialAgent(BW4TBrain):
 
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'iron' in info['obj_id'] and info not in objects:
                         objects.append(info)
-                        self._sendMessage('Iron debris is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Remove" alone, "Continue" exploring, or call in a "Fire fighter" to help remove. \n \n \
+                        self._sendMessage('Iron debris is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Remove", "Continue" exploring, or call in a "Fire fighter" to help remove. \n \n \
                             Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + ' \n - Iron debris weight: ' + str(int(info['weight'])) + ' kilograms \n - by myself removal time: ' \
                             + str(int(info['weight']/10)) + ' seconds \n - with help removal time: ' + str(int(info['weight']/20)) + ' seconds \n - toxic concentrations: ' + str(self._hcn) + ' ppm HCN and ' + str(self._co) + ' ppm CO','Brutus')
-                        #if self._count  < 1:
-                            #self._sendMessage('I have found an injured victim who I cannot evacuate to safety myself. \
-                            #                  We should decide whether to send in Firefighters to rescue this victim, or if sending them in is too dangerous. \
-                            #                  I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
-                            #                  This is how much each feature contributed to the predicted sensitivity: \n \n' \
-                            #                  + self._R2PyPlotLocate(self._totalVictimsCat,self._duration,self._counter_value,self._temperatureCat), 'Brutus')
-                            #self._count+=1
                         self._waiting = True
                         if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                             self._waiting = False
                             self._tosearch.append(self._door['room_name'])
                             self._phase=Phase.FIND_NEXT_GOAL
-                        if self.received_messages_content and 'Remove' in self.received_messages_content[-1] or self.received_messages_content and 'alone' in self.received_messages_content[-1]:
+                        if self.received_messages_content and self.received_messages_content[-1] == 'Remove' or self.received_messages_content and 'alone' in self.received_messages_content[-1] and 'Removing' in self.received_messages_content[-1]:
                             self._sendMessage('Removing iron debris blocking ' + str(self._door['room_name']) + ' alone.','Brutus')
                             #self._phase = Phase.ENTER_ROOM
                             #print("REMOVING")
-                            return RemoveObject.__name__, {'object_id': info['obj_id'],'size':info['visualization']['size'], 'duration_in_ticks':100}
+                            return RemoveObject.__name__, {'object_id': info['obj_id'],'size':info['visualization']['size']}
                         if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
                             self._sendMessage('Removing iron debris blocking ' + str(self._door['room_name']) + ' together with fire fighter.','Brutus')
                             self._phase = Phase.BACKUP
@@ -574,7 +525,6 @@ class TutorialAgent(BW4TBrain):
                             self._phase = Phase.FIND_NEXT_GOAL
                             return Injured.__name__,{'duration_in_ticks':50}
                         else:
-                            self._decided = True
                             self._phase = Phase.PLAN_PATH_TO_VICTIM
                             return RemoveObjectTogether.__name__, {'object_id': info['obj_id'], 'size':info['visualization']['size']}
                     
@@ -602,7 +552,6 @@ class TutorialAgent(BW4TBrain):
 
 
             if Phase.PLAN_ROOM_SEARCH_PATH==self._phase:
-                self._agentLoc = int(self._door['room_name'].split()[-1])
                 roomTiles = [info['location'] for info in state.values()
                     if 'class_inheritance' in info 
                     and 'AreaTile' in info['class_inheritance']
@@ -813,8 +762,6 @@ class TutorialAgent(BW4TBrain):
                     self._remove = True
                     self._sendMessage('Moving to ' + str(self._door['room_name']) + ' to help you remove an obstacle.', 'Brutus')  
                     self._phase = Phase.PLAN_PATH_TO_ROOM
-            if mssgs and mssgs[-1].split()[-1] in ['1','2','3','4','5','6','7','8','9','10','11','12','13','14']:
-                self._humanLoc = int(mssgs[-1].split()[-1])
 
             #if msg.startswith('Mission'):
             #    self._sendMessage('Unsearched areas: '  + ', '.join([i.split()[1] for i in areas if i not in self._searchedRooms]) + '. Collected victims: ' + ', '.join(self._collectedVictims) +
