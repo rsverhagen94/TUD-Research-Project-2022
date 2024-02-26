@@ -378,8 +378,8 @@ class CarryObject(Action):
         object_id = None if 'object_id' not in kwargs else kwargs['object_id']
         grab_range = np.inf if 'grab_range' not in kwargs else kwargs['grab_range']
         max_objects = np.inf if 'max_objects' not in kwargs else kwargs['max_objects']
-        if object_id and 'critical' in object_id:
-            return GrabObjectResult(GrabObjectResult.RESULT_OBJECT_UNMOVABLE, False)
+        #if object_id and 'critical' in object_id:
+        #    return GrabObjectResult(GrabObjectResult.RESULT_OBJECT_UNMOVABLE, False)
         if object_id and 'stone' in object_id or object_id and 'rock' in object_id or object_id and 'tree' in object_id:
             return GrabObjectResult(GrabObjectResult.RESULT_OBJECT_UNMOVABLE, False)
         else:
@@ -456,6 +456,8 @@ class CarryObject(Action):
         #    reg_ag.change_property("img_name", "/images/carry-critical-robot.svg")
         if 'mild' in object_id and 'brutus' in agent_id:
             reg_ag.change_property("img_name", "/images/carry-mild-human.svg")
+        if 'critical' in object_id and 'brutus' in agent_id:
+            reg_ag.change_property("img_name", "/images/carry-critical-human.svg")
 
         # Remove it from the grid world (it is now stored in the is_carrying list of the AgentAvatar
         succeeded = grid_world.remove_from_grid(object_id=env_obj.obj_id, remove_from_carrier=False)
@@ -606,10 +608,10 @@ class Drop(Action):
         else:
             return DropObjectResult(DropObjectResult.RESULT_NO_OBJECT, False)
 
-        if 'critical' in obj_id:
-            return DropObjectResult(DropObjectResult.RESULT_UNKNOWN_OBJECT_TYPE, False)            
-        else:
-            return _possible_drop(grid_world, agent_id=agent_id, obj_id=obj_id, drop_range=drop_range)
+        #if 'critical' in obj_id:
+        #    return DropObjectResult(DropObjectResult.RESULT_UNKNOWN_OBJECT_TYPE, False)            
+        #else:
+        return _possible_drop(grid_world, agent_id=agent_id, obj_id=obj_id, drop_range=drop_range)
 
     def mutate(self, grid_world, agent_id, world_state, **kwargs):
         """ Drops the carried object.

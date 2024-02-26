@@ -16,7 +16,6 @@ from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
 from agents1.BaselineAgent import BaselineAgent
 from agents1.TutorialAgent import TutorialAgent
-from agents1.TimerAgent import TimerAgent
 from actions1.customActions import RemoveObjectTogether
 from brains1.HumanBrain import HumanBrain
 from loggers.action_logger import ActionLogger
@@ -84,7 +83,6 @@ def add_agents(builder, condition, exp_version):
             #    brain = BaselineAgent(slowdown=8)
             if exp_version=="experiment" and condition=="baseline":
                 brain = TutorialAgent(slowdown=4)
-                brain2 = TimerAgent(slowdown=4)
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -92,8 +90,6 @@ def add_agents(builder, condition, exp_version):
                 loc = (16,8)
             builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
-            builder.add_agent((24,11), brain2, team=team_name, name="TimerAgent", customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0, 
-                              sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_opacity=0)
 
 
         # Add human agents
@@ -174,30 +170,30 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        builder.add_object((2,8), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
+        builder.add_object((2,8), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
         for i in [(2,6),(1,6),(0,6),(3,6),(3,5),(3,4),(2,5),(2,4),(1,5),(1,4),(0,5),(0,4),(4,6),(4,5),(4,4)]:
             builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
 
-        builder.add_object((16,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
+        builder.add_object((16,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(16,21),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
         for i in [(16,19),(15,19),(14,19),(17,19),(17,18),(17,20),(16,18),(16,20),(15,18),(15,20),(14,18),(14,20),(18,19),(18,18),(18,20)]:
             builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))        
 
-        builder.add_object((16,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False)
-        builder.add_object((9,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False) 
-        builder.add_object((2,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
-        builder.add_object((9,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
+        builder.add_object((16,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
+        builder.add_object((9,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True) 
+        builder.add_object((2,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(10,1),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
-        builder.add_object((9,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
-        builder.add_object((16,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
-        builder.add_object((2,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
-        builder.add_object((9,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100)
-        builder.add_object((9,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
+        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((9,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((16,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((2,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(10,22),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((9,17),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125)
-        builder.add_object((16,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False)
+        builder.add_object((9,17),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((16,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(17,15),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
     
         #builder.add_object((2,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=15, weight=False)
@@ -206,7 +202,7 @@ def create_builder(exp_version, condition, task):
 
         builder.add_object((3,2),'critically injured woman in area 1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured woman.svg")
         builder.add_object((8,1),'mildly injured elderly man in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly man.svg")
-        builder.add_object((8,9),'critically injured elderly man in area 6', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly man.svg")
+        builder.add_object((1,22),'critically injured elderly man in area 11', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly man.svg")
         builder.add_object((3,16),'critically injured man in area 8', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured man.svg")
         builder.add_object((15,15),'mildly injured woman in area 10', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured woman.svg")
         builder.add_object((10,23),'mildly injured elderly woman in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
@@ -251,8 +247,8 @@ class CollectableBlock(EnvObject):
                          is_drop_zone=False, is_goal_block=False, is_collectable=True)
 
 class ObstacleObject(EnvObject):
-    def __init__(self, location, name, percentage_lel, weight, visualize_shape, img_name, visualize_size):
-        super().__init__(location, name, percentage_lel=percentage_lel, weight=weight, is_traversable=False, is_movable=True,
+    def __init__(self, location, name, percentage_lel, weight, visualize_shape, img_name, visualize_size, is_traversable, is_movable):
+        super().__init__(location, name, percentage_lel=percentage_lel, weight=weight, is_traversable=is_traversable, is_movable=is_movable,
                          visualize_shape=visualize_shape,img_name=img_name,
                          visualize_size=visualize_size, class_callable=ObstacleObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)
