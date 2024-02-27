@@ -18,7 +18,7 @@ from matrx.messages.message_manager import MessageManager
 from actions1.customActions import Backup, RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop, Injured, AddObject
 
 class Phase(enum.Enum):
-    START=1,
+    LOCATE=1,
     FIND_NEXT_GOAL=2,
     PICK_UNSEARCHED_ROOM=3,
     PLAN_PATH_TO_ROOM=4,
@@ -34,7 +34,9 @@ class Phase(enum.Enum):
     FOLLOW_PATH_TO_DROPPOINT=14,
     DROP_VICTIM=15,
     BACKUP=16,
-    BACKUP2=17
+    BACKUP2=17,
+    TACTIC=18,
+    DEFENSIVE_TACTIC=19
     
 class TutorialAgent(BW4TBrain):
     def __init__(self, slowdown:int):
@@ -68,6 +70,8 @@ class TutorialAgent(BW4TBrain):
         self._counter_value = 90
         self._duration = 15
         self._modulos = []
+        self._tactic = 'offensive'
+        self._backup = None
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
@@ -93,6 +97,17 @@ class TutorialAgent(BW4TBrain):
         self._sendMessage('Distance: ' + self._distance + '.', 'RescueBot')
         self._sendMessage('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
+        for info in state.values():
+            if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
+                self._sendMessage('Found fire source!', 'Brutus')
+                self._location = '✔'
+            if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                self._sendMessage('Found fire!', 'Brutus')
+                if self._tactic=='defensive':
+                     self._sendMessage('Extinguishing fire...', 'Brutus')
+                     return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':50}
+
+
         if self._location == '✔':
             for info in state.values():
                 if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
@@ -109,24 +124,71 @@ class TutorialAgent(BW4TBrain):
             self._locationCat = 'unknown'
         if self._location == '✔':
             self._locationCat = 'known'
-        
-        if self._timeLeft - self._counter_value == 20 and not self._plotGenerated or self._timeLeft - self._counter_value == 30 and not self._plotGenerated or self._timeLeft - self._counter_value == 40 and not self._plotGenerated \
-            or self._timeLeft - self._counter_value == 50 and not self._plotGenerated or self._timeLeft - self._counter_value == 60 and not self._plotGenerated or self._timeLeft - self._counter_value == 70 and not self._plotGenerated \
-            or self._timeLeft - self._counter_value == 80 and not self._plotGenerated:
-            image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
-            self._R2PyPlotTactic(self._totalVictimsCat, self._locationCat, self._duration, self._counter_value, image_name)
-            self._plotGenerated = True
-            image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-            self._sendMessage('My offensive inside deployment has been going on for 10 minutes now. We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
-                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                            + image_name, 'Brutus')
 
-        if self._timeLeft - self._counter_value not in [1,20,30,40,50,60,70,80, self._time]: #replace by list keeping track of all times where plots are send
+        if self._timeLeft - self._counter_value not in [1,10,20,30,40,50,60,70,80, self._time]: #replace by list keeping track of all times where plots are send
             self._plotGenerated = False
 
         while True:     
 
-            if self._timeLeft - self._counter_value == 1 and self._location == '?' and not self._plotGenerated:
+            if self._timeLeft - self._counter_value == 1 and not self._plotGenerated or self._timeLeft - self._counter_value == 30 and not self._plotGenerated or self._timeLeft - self._counter_value == 40 and not self._plotGenerated \
+                or self._timeLeft - self._counter_value == 50 and not self._plotGenerated or self._timeLeft - self._counter_value == 60 and not self._plotGenerated or self._timeLeft - self._counter_value == 70 and not self._plotGenerated \
+                or self._timeLeft - self._counter_value == 80 and not self._plotGenerated:
+                image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
+                #sensitivity = self._R2PyPlotTactic(self._totalVictimsCat, self._locationCat, self._duration, self._counter_value, image_name)
+                sensitivity = self._R2PyPlotTactic('multiple', self._locationCat, self._duration, self._counter_value, image_name)
+                sensitivity = 4
+                self._plotGenerated = True
+                image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
+                if sensitivity >= 4.2:
+                    self._sendMessage('My offensive inside deployment has been going on for ' + str(self._timeLeft - self._counter_value) + ' minutes now. \
+                                    We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
+                                    Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                    This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                    + image_name, 'Brutus')
+                    self._decide = 'human'
+                    self._lastPhase = self._phase
+                    self._phase = Phase.TACTIC
+                
+                if sensitivity < 4.2:
+                    self._sendMessage('My offensive inside deployment has been going on for ' + str(self._timeLeft - self._counter_value) + ' minutes now. \
+                                    We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
+                                    I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
+                                    This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                    + image_name, 'Brutus')
+                    self._decide = 'Brutus'
+                    self._time = self._timeLeft - self._counter_value
+                    self._lastPhase = self._phase
+                    self._phase = Phase.TACTIC
+
+            if Phase.TACTIC==self._phase:
+                if self._decide == 'human':
+                    self._sendMessage('If you want to continue with the offensive inside deployment, press the "Continue" button. \
+                                    If you want to switch to a defensive inside deployment, press the "Switch" button.', 'Brutus')
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
+                        self._sendMessage('Continuing with the offensive inside deployment because you decided to.', 'Brutus')
+                        self._tactic = 'offensive'
+                        self._phase = self._lastPhase
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
+                        self._sendMessage('Switching to a defensive inside deployment because you decided to.', 'Brutus')
+                        self._tactic = 'defensive'
+                        self._phase = self._lastPhase
+                    else:
+                        return None, {}
+
+                # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SWITCHING TACTICS, FOR EXAMPLE WRT HOW DANGEROUS SITUATION IS (CHECK GUIDELINES)    
+                if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._counter_value > 45:
+                    self._sendMessage('Continuing with the offensive inside deployment because the estimated fire resistance to collapse is higher than 45 minutes.', 'Brutus')
+                    self._tactic = 'offensive'
+                    self._phase = self._lastPhase
+                if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._counter_value <= 45:
+                    self._sendMessage('Switching to the defensive inside deployment because the estimated fire resistance to collapse is less than 45 minutes.', 'Brutus')
+                    self._tactic = 'defensive'
+                    self._phase = self._lastPhase
+                else:
+                    return None, {}
+
+
+            if self._timeLeft - self._counter_value == 10 and self._location == '?' and not self._plotGenerated:
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
                 #sensitivity = self._R2PyPlotLocate(self._totalVictims, self._duration, self._counter_value, self._temperatureCat, image_name)
                 sensitivity = self._R2PyPlotLocate('multiple', self._duration, self._counter_value, self._temperatureCat, image_name)
@@ -135,26 +197,29 @@ class TutorialAgent(BW4TBrain):
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                 if sensitivity >= 4.2:
                     self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in fire fighters to help locate the fire source or if sending them in is too dangerous. \
-                                    Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                    + image_name, 'Brutus')
+                                      Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                      This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                      + image_name, 'Brutus')
                     self._decide = 'human'
                     self._lastPhase = self._phase
-                    self._phase = Phase.START
+                    self._phase = Phase.LOCATE
 
                 if sensitivity < 4.2:
                     self._sendMessage('The location of the fire source still has not been found, so we should decide whether to send in fire fighters to help locate the fire source or if sending them in is too dangerous. \
-                                    I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                    + image_name, 'Brutus')
+                                      I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
+                                      This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                      + image_name, 'Brutus')
                     self._decide = 'Brutus'
                     self._time = self._timeLeft - self._counter_value
                     self._lastPhase = self._phase
-                    self._phase = Phase.START
+                    self._phase = Phase.LOCATE
 
-            if Phase.START==self._phase:
+            if Phase.LOCATE==self._phase:
                 if self._decide == 'human':
-                    self._sendMessage('If you want to send in fire fighters to help locate the fire source, press the "Fire fighter" button. If you do not want to send them in, press the "Continue" button.', 'Brutus')
+                    self._sendMessage('If you want to send in fire fighters to help locate the fire source, press the "Fire fighter" button. \
+                                      If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._sendMessage('Not sending them in!', 'Brutus')
+                        self._sendMessage('Not sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
                         self._phase = self._lastPhase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
                         self._sendMessage('Sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
@@ -303,22 +368,23 @@ class TutorialAgent(BW4TBrain):
                     self._currentDoor=self._door['location']
                     action = self._navigator.get_move_action(self._state_tracker)
                     if action!=None:
-                        #for info in state.values():
-                            #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'stone' in info['obj_id'] and info['location'] not in [(9,7),(9,19),(21,19)]:
-                            #    self._sendMessage('Found stones blocking my path to ' + str(self._door['room_name']) + '. We can remove them faster if you help me. If you will come here press the "Yes" button, if not press "No".', 'Brutus')
-                            #    if self.received_messages_content and self.received_messages_content[-1]=='Yes':
-                            #        return None, {}
-                            #    if self.received_messages_content and self.received_messages_content[-1]=='No' or state['World']['nr_ticks'] > self._tick + 579:
-                            #        self._sendMessage('Removing the stones blocking the path to ' + str(self._door['room_name']) + ' because I want to search this area. We can remove them faster if you help me', 'Brutus')
-                                #return RemoveObject.__name__,{'object_id':info['obj_id'],'size':info['visualization']['size']}
+                            #for info in state.values():
+                                #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'stone' in info['obj_id'] and info['location'] not in [(9,7),(9,19),(21,19)]:
+                                #    self._sendMessage('Found stones blocking my path to ' + str(self._door['room_name']) + '. We can remove them faster if you help me. If you will come here press the "Yes" button, if not press "No".', 'Brutus')
+                                #    if self.received_messages_content and self.received_messages_content[-1]=='Yes':
+                                #        return None, {}
+                                #    if self.received_messages_content and self.received_messages_content[-1]=='No' or state['World']['nr_ticks'] > self._tick + 579:
+                                #        self._sendMessage('Removing the stones blocking the path to ' + str(self._door['room_name']) + ' because I want to search this area. We can remove them faster if you help me', 'Brutus')
+                                    #return RemoveObject.__name__,{'object_id':info['obj_id'],'size':info['visualization']['size']}
                         return action,{}
+                    
                 self._phase=Phase.REMOVE_OBSTACLE_IF_NEEDED         
 
             if Phase.REMOVE_OBSTACLE_IF_NEEDED==self._phase:
                 objects = []
                 for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                        objects.append(info)
+                    #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                    #    objects.append(info)
                         #self._sendMessage('fire is blocking ' + str(self._door['room_name'])+'. \n \n Please decide whether to "Extinguish", "Continue" exploring, or call in a "Fire fighter" to help extinguishing. \n \n \
                         #    Important features to consider: \n - Pinned victims located: ' + str(self._collectedVictims) + '\n - fire temperature: ' + str(int(info['visualization']['size']*300)) + ' degrees Celcius \
                         #    \n - explosion danger: ' + str(info['percentage_lel']) + '% LEL \n - by myself extinguish time: ' + str(int(info['visualization']['size']*7.5)) + ' seconds \n - with help extinguish time: \
@@ -339,10 +405,13 @@ class TutorialAgent(BW4TBrain):
                         #else:
                         #    return None,{}
                     
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
-                        objects.append(info)
-                        self._sendMessage('Found fire source!', 'Brutus')
-                        self._location = '✔'
+                    #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id'] and self._location!='✔':
+                    #    objects.append(info)
+                    #    self._sendMessage('Found fire source!', 'Brutus')
+                    #    self._location = '✔'
+
+                    #    return None, {}
+                        
                         #self._waiting = True
                         #if self.received_messages_content and self.received_messages_content[-1]=='Continue':
                         #    self._waiting = False
@@ -385,7 +454,7 @@ class TutorialAgent(BW4TBrain):
                         else:
                             return None,{}
 
-                if len(objects)==0:                    
+                if len(objects)==0:
                     #self._sendMessage('No need to clear the entrance of ' + str(self._door['room_name']) + ' because it is not blocked by obstacles.','Brutus')
                     self._answered = False
                     self._phase = Phase.ENTER_ROOM
@@ -474,6 +543,18 @@ class TutorialAgent(BW4TBrain):
                     if action!=None:
                         return action,{}
                     self._phase=Phase.PLAN_ROOM_SEARCH_PATH
+                    #if self._tactic == 'offensive':
+                    #    self._phase=Phase.PLAN_ROOM_SEARCH_PATH
+                    #if self._tactic == 'defensive':
+                    #    self._phase=Phase.DEFENSIVE_TACTIC
+
+            #if Phase.DEFENSIVE_TACTIC==self._phase:
+            #    for info in state.values():
+            #        if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+            #            print('FOUND FIRE!')
+            #    self._searchedRooms.append(self._door['room_name'])
+            #    self._phase=Phase.FIND_NEXT_GOAL
+            #    return MoveNorth.__name__, {}
 
             if Phase.PLAN_ROOM_SEARCH_PATH==self._phase:
                 roomTiles = [info['location'] for info in state.values()
@@ -484,7 +565,10 @@ class TutorialAgent(BW4TBrain):
                 ]
                 self._roomtiles=roomTiles               
                 self._navigator.reset_full()
-                self._navigator.add_waypoints(roomTiles)
+                if self._tactic == 'offensive':
+                    self._navigator.add_waypoints(roomTiles)
+                if self._tactic == 'defensive':
+                    self._navigator.add_waypoints([self._door['location']])
                 #self._sendMessage('Searching through whole ' + str(self._door['room_name']) + ' because my sense range is limited and to find victims.', 'Brutus')
                 self._roomVics=[]
                 self._phase=Phase.FOLLOW_ROOM_SEARCH_PATH

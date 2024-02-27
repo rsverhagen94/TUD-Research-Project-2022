@@ -71,7 +71,7 @@ def add_agents(builder, condition, exp_version):
     sense_capability = SenseCapability({AgentBody: agent_sense_range,
                                         CollectableBlock: block_sense_range,
                                         None: other_sense_range,
-                                        ObstacleObject: 1,
+                                        ObstacleObject: 2,
                                         SmokeObject: 1})
 
     for team in range(nr_teams):
@@ -170,7 +170,7 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        builder.add_object((2,8), 'fire source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
+        builder.add_object((2,8), 'source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
         builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
         for i in [(2,6),(1,6),(0,6),(3,6),(3,5),(3,4),(2,5),(2,4),(1,5),(1,4),(0,5),(0,4),(4,6),(4,5),(4,4)]:
             builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
