@@ -83,6 +83,7 @@ def add_agents(builder, condition, exp_version):
             #    brain = BaselineAgent(slowdown=8)
             if exp_version=="experiment" and condition=="baseline":
                 brain = TutorialAgent(slowdown=4)
+                brain2 = BaselineAgent(slowdown=4)
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -90,6 +91,8 @@ def add_agents(builder, condition, exp_version):
                 loc = (16,8)
             builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
+            builder.add_agent((24,14), brain2, team=team_name, name="fire fighter",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
 
 
         # Add human agents
@@ -200,12 +203,12 @@ def create_builder(exp_version, condition, task):
         #builder.add_object((1,9), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.25, percentage_lel=8, weight=False)
         
 
-        builder.add_object((3,2),'critically injured woman in area 1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured woman.svg")
+        builder.add_object((24,2),'critically injured woman in area 4', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured woman.svg")
         builder.add_object((8,1),'mildly injured elderly man in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly man.svg")
         builder.add_object((1,22),'critically injured elderly man in area 11', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly man.svg")
         builder.add_object((3,16),'critically injured man in area 8', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured man.svg")
         builder.add_object((15,15),'mildly injured woman in area 10', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured woman.svg")
-        builder.add_object((10,2),'mildly injured elderly woman in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
+        builder.add_object((10,23),'mildly injured elderly woman in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
         builder.add_object((8,22),'mildly injured man in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured man.svg")
         builder.add_object((24,23),'critically injured elderly woman in area 14', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly woman.svg")
         
@@ -255,7 +258,7 @@ class ObstacleObject(EnvObject):
 
 class SmokeObject(EnvObject):
     def __init__(self, location, name, co_ppm, hcn_ppm, visualize_shape, img_name, visualize_size):
-        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=True,
+        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=False,
                          visualize_shape=visualize_shape,img_name=img_name,
                          visualize_size=visualize_size, class_callable=SmokeObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)

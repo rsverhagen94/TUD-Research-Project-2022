@@ -52,6 +52,12 @@ class Idle(Action):
 
     def is_possible(self, grid_world, agent_id, **kwargs):
         return IdleResult(IdleResult.RESULT_SUCCESS, True)
+    
+    def mutate(self, grid_world, agent_id, **kwargs):
+        if 'fire_fighter' in agent_id:
+            reg_ag = grid_world.registered_agents[agent_id]
+            reg_ag.change_property("visualize_opacity", 1)
+        return IdleResult(IdleResult.RESULT_SUCCESS, True)
 
 
 class IdleResult(ActionResult):
@@ -462,8 +468,9 @@ class CarryObject(Action):
             reg_ag.change_property("img_name", "/images/evacuate-mild-man-transformed.png")
         if 'mild' in object_id and 'brutus' in agent_id and 'injured_woman' in object_id:
             reg_ag.change_property("img_name", "/images/evacuate-mild-woman-transformed.png")
-        if 'critical' in object_id and 'brutus' in agent_id:
+        if 'critical' in object_id and 'fire_fighter' in agent_id:
             reg_ag.change_property("img_name", "/images/carry-critical-human.svg")
+        
 
         # Remove it from the grid world (it is now stored in the is_carrying list of the AgentAvatar
         succeeded = grid_world.remove_from_grid(object_id=env_obj.obj_id, remove_from_carrier=False)
@@ -659,8 +666,9 @@ class Drop(Action):
         reg_ag = grid_world.registered_agents[agent_id]
         if 'human' in agent_id:
             reg_ag.change_property("img_name", "/images/robot-final4.svg")
-        if 'brutus' in agent_id:
-            reg_ag.change_property("img_name", "/images/robot-final4.svg")
+        if 'fire_fighter' in agent_id:
+            reg_ag.change_property("img_name", "/images/rescue-man-final3.svg")
+            reg_ag.change_property("visualize_opacity", 0)
 
         # fetch range from kwargs
         drop_range = 1 if 'drop_range' not in kwargs else kwargs['drop_range']

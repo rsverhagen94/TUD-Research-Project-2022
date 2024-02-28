@@ -55,11 +55,11 @@ class BW4TBrain(BW4TAgentBrain, ABC):
         #        params['action_duration'] = 1
         if act == 'RemoveObject' and 'iron' in params['object_id']:
             if params['size'] == 0.75:
-                params['action_duration'] = 100
+                params['action_duration'] = 1
             if params['size'] == 1:
-                params['action_duration'] = 100
+                params['action_duration'] = 1
             if params['size'] == 1.25:
-                params['action_duration'] = 400
+                params['action_duration'] = 1
         if act == 'RemoveObjectTogether' and 'iron' in params['object_id']:
             if params['size'] == 0.75:
                 params['action_duration'] = 50

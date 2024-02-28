@@ -37,7 +37,8 @@ class Phase(enum.Enum):
     BACKUP2=17,
     TACTIC=18,
     DEFENSIVE_TACTIC=19,
-    PRIORITY=20
+    PRIORITY=20,
+    RESCUE=21
 
     
 class TutorialAgent(BW4TBrain):
@@ -612,25 +613,41 @@ class TutorialAgent(BW4TBrain):
                                     image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
                                         #self._foundVictimLocs[self._goalVic]['location']
                                         #self._foundVictimLocs['critically injured girl']['location'] =  (10, 2)
-                                    distance = calculate_distances(self._fireCoords, (10, 16))
-                                    if distance < 14:
-                                        self._distance = 'small'
-                                    if distance >= 14:
-                                        self._distance = 'large'
+                                    #distance = calculate_distances(self._fireCoords, (10, 16))
+                                    #if distance < 14:
+                                    #    self._distance = 'small'
+                                    #if distance >= 14:
+                                    #    self._distance = 'large'
                                     if self._temperatureCat == 'close' or self._temperatureCat == 'lower':
                                         temperature = 'lower'
                                     if self._temperatureCat == 'higher':
                                         temperature = 'higher'
-                                    self._R2PyPlotRescue(self._duration, self._counter_value, temperature, self._distance, image_name)
+                                    #sensitivity = self._R2PyPlotRescue(self._duration, self._counter_value, temperature, self._distance, image_name)
+                                    sensitivity = self._R2PyPlotRescue(self._duration, self._counter_value, temperature, 'large', image_name)
+                                    
+                                    sensitivity = 5
                                     self._plotGenerated = True
                                     image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-                                    self._sendMessage('I have found a heavily injured victim who I cannot evacuate to safety myself. We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
-                                                    I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                                    + image_name, 'Brutus')
-                                    self._time = self._timeLeft - self._counter_value
+                                    if sensitivity >= 4.2:
+                                        self._sendMessage('I have found ' + vic + ' who I cannot evacuate to safety myself. \
+                                                        We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                        Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                                        This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                                        + image_name, 'Brutus')
+                                        self._decide = 'human'
+                                        self._phase = Phase.RESCUE
+                                        return Idle.__name__,{'duration_in_ticks':25}
 
-
-
+                                    if sensitivity < 4.2:
+                                        self._sendMessage('I have found ' + vic + ' who I cannot evacuate to safety myself. \
+                                                        We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                        I will make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                                        This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                                        + image_name, 'Brutus')
+                                        self._decide = 'Brutus'
+                                        self._time = self._timeLeft - self._counter_value
+                                        self._phase = Phase.RESCUE
+                                        return Idle.__name__,{'duration_in_ticks':25}
 
                         #if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:self._door['room_name']
 
@@ -655,7 +672,6 @@ class TutorialAgent(BW4TBrain):
                             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
                     #self._roomVics = ['mildly injured boy', 'mildly injured girl']
                             sensitivity = self._R2PyPlotPriority(len(self._roomVics), self._smoke, self._duration, self._locationCat, image_name)
-                            sensitivity = 4
                             self._plotGenerated = True
                             image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                             if sensitivity >= 4.2:
@@ -665,6 +681,7 @@ class TutorialAgent(BW4TBrain):
                                                 This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                 + image_name, 'Brutus')
                                 self._decide = 'human'
+                                #Sself._time = self._timeLeft - self._counter_value
                                 #self._lastPhase = self._phase
                                 self._phase = Phase.PRIORITY
                                 return Idle.__name__,{'duration_in_ticks':25}
@@ -684,6 +701,36 @@ class TutorialAgent(BW4TBrain):
                 self._searchedRooms.append(self._door['room_name'])
                 self._phase=Phase.FIND_NEXT_GOAL
                 return Idle.__name__,{'duration_in_ticks':25}
+            
+            if Phase.RESCUE==self._phase:
+                if self._decide == 'human':
+                    self._sendMessage('If you want to send in fire fighters to rescue ' + self._recentVic + ', press the "Fire fighter" button. \
+                                      If you do not want to send them in, press the "Continue" button.', 'Brutus')
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
+                        self._sendMessage('Sending in fire fighters to rescue ' + self._recentVic + ' because you decided to.', 'Brutus')
+                        vic_x = str(self._foundVictimLocs[self._recentVic]['location'][0])
+                        vic_y = str(self._foundVictimLocs[self._recentVic]['location'][1])
+                        drop_x = str(self._remaining[self._recentVic][0])
+                        drop_y = str(self._remaining[self._recentVic][1])
+                        self._sendMessage('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
+                        self._collectedVictims.append(self._recentVic)
+                        self._searchedRooms.append(self._door['room_name'])
+                        return None, {}
+                    
+                    if self.received_messages_content and self._recentVic in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
+                        self._phase = Phase.FIND_NEXT_GOAL
+
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
+                        self._sendMessage('Not sending in fire fighters to rescue ' + self._recentVic + ' because you decided to.', 'Brutus')
+                        self._collectedVictims.append(self._recentVic)
+                        self._searchedRooms.append(self._door['room_name'])
+                        self._phase = Phase.FIND_NEXT_GOAL
+                    else:
+                        return None, {}
+
+                # CONTINUE HERE
+                #if self._decide == 'Brutus':
+
             
             if Phase.PRIORITY==self._phase:
                 if self._decide == 'human':
