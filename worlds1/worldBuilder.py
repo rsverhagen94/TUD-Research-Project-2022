@@ -205,7 +205,7 @@ def create_builder(exp_version, condition, task):
         builder.add_object((1,22),'critically injured elderly man in area 11', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly man.svg")
         builder.add_object((3,16),'critically injured man in area 8', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured man.svg")
         builder.add_object((15,15),'mildly injured woman in area 10', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured woman.svg")
-        builder.add_object((10,23),'mildly injured elderly woman in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
+        builder.add_object((10,2),'mildly injured elderly woman in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
         builder.add_object((8,22),'mildly injured man in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured man.svg")
         builder.add_object((24,23),'critically injured elderly woman in area 14', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly woman.svg")
         
@@ -255,7 +255,7 @@ class ObstacleObject(EnvObject):
 
 class SmokeObject(EnvObject):
     def __init__(self, location, name, co_ppm, hcn_ppm, visualize_shape, img_name, visualize_size):
-        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=False,
+        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=True,
                          visualize_shape=visualize_shape,img_name=img_name,
                          visualize_size=visualize_size, class_callable=SmokeObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)

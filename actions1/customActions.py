@@ -454,8 +454,14 @@ class CarryObject(Action):
         #if 'critical' in object_id and 'bot' in agent_id:
             # change our image 
         #    reg_ag.change_property("img_name", "/images/carry-critical-robot.svg")
-        if 'mild' in object_id and 'brutus' in agent_id:
-            reg_ag.change_property("img_name", "/images/carry-mild-human.svg")
+        if 'mildly' in object_id and 'brutus' in agent_id and 'elderly_man' in object_id:
+            reg_ag.change_property("img_name", "/images/evacuate-mild-granddad-transformed.png")
+        if 'mild' in object_id and 'brutus' in agent_id and 'elderly_woman' in object_id:
+            reg_ag.change_property("img_name", "/images/evacuate-mild-grandma-transformed.png")
+        if 'mild' in object_id and 'brutus' in agent_id and 'injured_man' in object_id:
+            reg_ag.change_property("img_name", "/images/evacuate-mild-man-transformed.png")
+        if 'mild' in object_id and 'brutus' in agent_id and 'injured_woman' in object_id:
+            reg_ag.change_property("img_name", "/images/evacuate-mild-woman-transformed.png")
         if 'critical' in object_id and 'brutus' in agent_id:
             reg_ag.change_property("img_name", "/images/carry-critical-human.svg")
 

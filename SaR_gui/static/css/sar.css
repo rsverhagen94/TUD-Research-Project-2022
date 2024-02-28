@@ -136,6 +136,7 @@ html {
 #messages {
     overflow-y: scroll;
     max-height: 75vh;
+    margin-bottom: 5px;
 }
 
 .full-width-hr {
