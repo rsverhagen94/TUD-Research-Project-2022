@@ -664,7 +664,7 @@ class Drop(Action):
             objects can be on the same location.
         """
         reg_ag = grid_world.registered_agents[agent_id]
-        if 'human' in agent_id:
+        if 'brutus' in agent_id:
             reg_ag.change_property("img_name", "/images/robot-final4.svg")
         if 'fire_fighter' in agent_id:
             reg_ag.change_property("img_name", "/images/rescue-man-final3.svg")

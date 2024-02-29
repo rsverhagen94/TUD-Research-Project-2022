@@ -228,7 +228,7 @@ class TutorialAgent(BW4TBrain):
                         self._time = self._timeLeft - self._counter_value
                         self._phase = self._lastPhase
                         self._backup = True
-                        action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'fighter')
+                        action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'backup')
                         return AddObject.__name__, action_kwargs
                     else:
                         return None, {}
@@ -240,7 +240,7 @@ class TutorialAgent(BW4TBrain):
                     self._time = self._timeLeft - self._counter_value
                     self._phase = self._lastPhase
                     self._backup = True
-                    action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'fighter')
+                    action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'backup')
                     return AddObject.__name__, action_kwargs
                 if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._temperatureCat == 'higher':
                     self._sendMessage('Not sending in fire fighters because the temperature is higher than the auto-ignition temperatures of present substances.', 'Brutus')
@@ -252,7 +252,7 @@ class TutorialAgent(BW4TBrain):
                 
             if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
                 for info in state.values():
-                    if 'obj_id' in info.keys() and 'fighter' in info['obj_id']:
+                    if 'obj_id' in info.keys() and 'backup' in info['obj_id']:
                         return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':0}
                 
             if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
@@ -624,8 +624,7 @@ class TutorialAgent(BW4TBrain):
                                         temperature = 'higher'
                                     #sensitivity = self._R2PyPlotRescue(self._duration, self._counter_value, temperature, self._distance, image_name)
                                     sensitivity = self._R2PyPlotRescue(self._duration, self._counter_value, temperature, 'large', image_name)
-                                    
-                                    sensitivity = 5
+                                    #sensitivity = 4
                                     self._plotGenerated = True
                                     image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                                     if sensitivity >= 4.2:
@@ -641,7 +640,7 @@ class TutorialAgent(BW4TBrain):
                                     if sensitivity < 4.2:
                                         self._sendMessage('I have found ' + vic + ' who I cannot evacuate to safety myself. \
                                                         We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
-                                                        I will make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                                        I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
                                                         This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                         + image_name, 'Brutus')
                                         self._decide = 'Brutus'
@@ -713,8 +712,10 @@ class TutorialAgent(BW4TBrain):
                         drop_x = str(self._remaining[self._recentVic][0])
                         drop_y = str(self._remaining[self._recentVic][1])
                         self._sendMessage('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
-                        self._collectedVictims.append(self._recentVic)
-                        self._searchedRooms.append(self._door['room_name'])
+                        if self._recentVic not in self._collectedVictims:
+                            self._collectedVictims.append(self._recentVic)
+                        if self._door['room_name'] not in self._searchedRooms:
+                            self._searchedRooms.append(self._door['room_name'])
                         return None, {}
                     
                     if self.received_messages_content and self._recentVic in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
@@ -728,10 +729,33 @@ class TutorialAgent(BW4TBrain):
                     else:
                         return None, {}
 
-                # CONTINUE HERE
-                #if self._decide == 'Brutus':
+                # ADD MORE CONDITIONS
+                if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._temperatureCat != 'higher' and self._counter_value > 15:
+                    self._sendMessage('Sending in fire fighters to rescue ' + self._recentVic + ' because the temperature is lower than the auto-ignition temperatures of present substances \
+                                      and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                    vic_x = str(self._foundVictimLocs[self._recentVic]['location'][0])
+                    vic_y = str(self._foundVictimLocs[self._recentVic]['location'][1])
+                    drop_x = str(self._remaining[self._recentVic][0])
+                    self._sendMessage('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
+                    if self._recentVic not in self._collectedVictims:
+                        self._collectedVictims.append(self._recentVic)
+                    if self._door['room_name'] not in self._searchedRooms:
+                        self._searchedRooms.append(self._door['room_name'])
+                    return None, {}
+                
+                if self.received_messages_content and self._recentVic in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1] and self._decide == 'Brutus':
+                    self._phase = Phase.FIND_NEXT_GOAL
 
-            
+                if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._temperatureCat == 'higher' and self._counter_value <= 15:
+                    self._sendMessage('Not sending in fire fighters to rescue ' + self._recentVic + ' because the temperature is higher than the auto-ignition temperatures of present substances \
+                                      and the estimated fire resistance to collapse is less than 15 minutes.', 'Brutus')
+                    self._collectedVictims.append(self._recentVic)
+                    self._searchedRooms.append(self._door['room_name'])
+                    self._phase = Phase.FIND_NEXT_GOAL
+                
+                else:
+                    return None, {}
+
             if Phase.PRIORITY==self._phase:
                 if self._decide == 'human':
                     self._sendMessage('If you want to first extinguish the fire in office ' + self._door['room_name'].split()[-1] + ', press the "Extinguish" button. \
@@ -1095,10 +1119,10 @@ class TutorialAgent(BW4TBrain):
                         temp <- '<≈ thresh.'
                     }}
                     if ("{temperature}" == 'lower') {{
-                        temp <- '< thresh.'
+                        temp <- '&lt; thresh.'
                     }}
                     if ("{temperature}" == 'higher') {{
-                        temp <- '>thresh.'
+                        temp <- '&gt; thresh.'
                     }}
                     labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
                     resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data$resistance, min), 

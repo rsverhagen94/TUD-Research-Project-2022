@@ -82,6 +82,7 @@ class BaselineAgent(BW4TBrain):
         self._waiting = False
         self._confidence = True
         self._rescued = []
+        self._goalVic = None
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
@@ -98,10 +99,9 @@ class BaselineAgent(BW4TBrain):
                 self._teamMembers.append(member)
         # Process messages from team members
         self._processMessages(state, self._teamMembers)
-
         while True:            
             if Phase.INTRO0 == self._phase:
-                if self.received_messages_content and 'Coordinates' in self.received_messages_content[-1] and 'critically injured woman' not in self._rescued:
+                if self.received_messages_content and 'Coordinates' in self.received_messages_content[-1] and self._goalVic not in self._rescued:
                     msg = self.received_messages_content[-1]
                     self._dropLoc = tuple((int(msg.split()[-3]), int(msg.split()[-1])))
                     self._goalLoc = tuple((int(msg.split()[2]), int(msg.split()[4])))
@@ -146,6 +146,7 @@ class BaselineAgent(BW4TBrain):
                 self._sendMessage('Delivered ' + self._goalVic + ' at the drop zone.', 'RescueBot')
                 self._phase = Phase.INTRO0
                 self._currentDoor = None
+                self._goalVic = None
                 return Drop.__name__, {'duration_in_ticks':0}
 
     def _getDropZones(self, state: State):
