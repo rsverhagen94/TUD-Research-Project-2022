@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 
-class MessageLogger(GridWorldLogger):
+class message_logger(GridWorldLogger):
     """ Logs messages send and received by (all) agents """
 
     def __init__(self, save_path="", file_name_prefix="", file_extension=".csv", delimiter=";"):

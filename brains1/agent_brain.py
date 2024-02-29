@@ -7,7 +7,7 @@ from matrx.agents.agent_utils.state import State
 from matrx.messages import Message
 
 
-class BW4TAgentBrain(AgentBrain):
+class agent_brain(AgentBrain):
     """ An artificial agent whose behaviour can be programmed to be, for example, (semi-)autonomous.
     This brain inherits from the normal MATRX AgentBrain but with one small adjustment in the function '_set_messages' making it possible to identify the sender of messages.
     """
@@ -607,7 +607,7 @@ class BW4TAgentBrain(AgentBrain):
         for mssg in messages:
 
             # Check if the message is of type Message (its content contains the actual message)
-            BW4TAgentBrain.__check_message(mssg, self.agent_id)
+            agent_brain.__check_message(mssg, self.agent_id)
 
             # Since each message is secretly wrapped inside a Message (as its content), we unpack its content and
             # set that as the actual received message.

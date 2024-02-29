@@ -3,8 +3,9 @@ import sys
 import csv
 import glob
 import pathlib
-from SaR_gui import visualization_server
-from worlds1.worldBuilder import create_builder
+from custom_gui import visualization_server
+from worlds1.world_builder import create_builder
+from utils1.util_functions import load_R_to_Py
 from pathlib import Path
 
 if __name__ == "__main__":
@@ -31,7 +32,8 @@ if __name__ == "__main__":
         builder.startup(media_folder=media_folder)
         print("Started world...")
         world = builder.get_world()
-        builder.api_info['matrx_paused'] = False
+        builder.api_info['matrx_paused'] = True
+        load_R_to_Py()
         world.run(builder.api_info)
 
         if choice1=="experiment":

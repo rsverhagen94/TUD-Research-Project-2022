@@ -1,9 +1,9 @@
 from abc import  ABC, abstractmethod
-from actions1.customActions import RemoveObjectTogether
+from actions1.custom_actions import RemoveObjectTogether
 from matrx.agents.agent_utils.state import State
-from brains1.BW4TAgentBrain import BW4TAgentBrain
+from brains1.agent_brain import agent_brain
 
-class BW4TBrain(BW4TAgentBrain, ABC):
+class custom_agent_brain(agent_brain, ABC):
     """
     This class is the obligatory base class for BW4T agents.
     BW4T agents must implement decide_on_bw4t_action

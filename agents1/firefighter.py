@@ -1,7 +1,7 @@
 import sys, random, enum, ast, time
 from matrx import grid_world
-from brains1.BW4TBrain import BW4TBrain
-from actions1.customActions import *
+from brains1.custom_agent_brain import custom_agent_brain
+from actions1.custom_actions import *
 from matrx import utils
 from matrx.grid_world import GridWorld
 from matrx.agents.agent_utils.state import State
@@ -12,7 +12,7 @@ from matrx.actions.object_actions import GrabObject, DropObject, RemoveObject
 from matrx.actions.move_actions import MoveNorth
 from matrx.messages.message import Message
 from matrx.messages.message_manager import MessageManager
-from actions1.customActions import RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop
+from actions1.custom_actions import RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop
 
 class Phase(enum.Enum):
     INTRO0 = 0,
@@ -49,7 +49,7 @@ class Phase(enum.Enum):
     FOLLOW_EXIT_PATH = 31
 
 
-class BaselineAgent(BW4TBrain):
+class firefighter(custom_agent_brain):
     def __init__(self, slowdown: int):
         super().__init__(slowdown)
         self._slowdown = slowdown

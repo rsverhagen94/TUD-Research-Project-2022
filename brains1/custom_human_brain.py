@@ -10,10 +10,10 @@ import numpy as np
 
 from matrx.messages import Message
 from matrx.actions.move_actions import MoveNorth, MoveNorthEast, MoveEast, MoveSouthEast, MoveSouth, MoveSouthWest, MoveWest, MoveNorthWest
-from actions1.customActions import RemoveObjectTogether, Idle, CarryObject, CarryObjectTogether, DropObjectTogether, Drop, RemoveObject
+from actions1.custom_actions import RemoveObjectTogether, Idle, CarryObject, CarryObjectTogether, DropObjectTogether, Drop, RemoveObject
 
 
-class HumanBrain(HumanAgentBrain):
+class custom_human_brain(HumanAgentBrain):
     """ Creates an Human Agent which is an agent that can be controlled by a
     human.
     """

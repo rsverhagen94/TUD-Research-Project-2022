@@ -9,18 +9,18 @@ from matrx.actions import MoveNorth, OpenDoorAction, CloseDoorAction, GrabObject
 from matrx.actions.move_actions import MoveEast, MoveSouth, MoveWest
 from matrx.agents import AgentBrain, HumanAgentBrain, SenseCapability
 from matrx.grid_world import GridWorld, AgentBody
-from actions1.customActions import RemoveObjectTogether, DropObject, Idle, CarryObject, Drop, CarryObjectTogether, DropObjectTogether
+from actions1.custom_actions import RemoveObjectTogether, DropObject, Idle, CarryObject, Drop, CarryObjectTogether, DropObjectTogether
 from matrx.actions.object_actions import RemoveObject
 from matrx.objects import EnvObject
 from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
-from agents1.BaselineAgent import BaselineAgent
-from agents1.TutorialAgent import TutorialAgent
-from actions1.customActions import RemoveObjectTogether
-from brains1.HumanBrain import HumanBrain
-from loggers.action_logger import ActionLogger
+from agents1.firefighter import firefighter
+from agents1.brutus import brutus
+from actions1.custom_actions import RemoveObjectTogether
+from brains1.custom_human_brain import custom_human_brain
+from loggers.action_logger import action_logger
 from datetime import datetime
-from loggers.message_logger import MessageLogger
+from loggers.message_logger import message_logger
 
 tick_duration = 0.1
 random_seed = 1
@@ -82,10 +82,10 @@ def add_agents(builder, condition, exp_version):
             #if exp_version=="experiment" and condition=="baseline":
             #    brain = BaselineAgent(slowdown=8)
             if exp_version=="experiment" and condition=="baseline":
-                brain = TutorialAgent(slowdown=1)
-                brain2 = BaselineAgent(slowdown=1)
-                brain3 = BaselineAgent(slowdown=1)
-                brain4 = BaselineAgent(slowdown=1)
+                brain = brutus(slowdown=1)
+                brain2 = firefighter(slowdown=1)
+                brain3 = firefighter(slowdown=1)
+                brain4 = firefighter(slowdown=1)
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -103,7 +103,7 @@ def add_agents(builder, condition, exp_version):
 
         # Add human agents
         for human_agent_nr in range(human_agents_per_team):
-            brain = HumanBrain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion)
+            brain = custom_human_brain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion)
             if exp_version=="experiment":
                 loc = (24,13)
             else:
@@ -131,8 +131,8 @@ def create_builder(exp_version, condition, task):
     if exp_version=="experiment":
         current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
         logger_save_folder = os.path.join("experiment_logs", current_exp_folder)
-        builder.add_logger(ActionLogger, log_strategy=1, save_path=logger_save_folder, file_name_prefix="actions_")
-        builder.add_logger(MessageLogger, save_path=logger_save_folder, file_name_prefix="messages_")
+        builder.add_logger(action_logger, log_strategy=1, save_path=logger_save_folder, file_name_prefix="actions_")
+        builder.add_logger(message_logger, save_path=logger_save_folder, file_name_prefix="messages_")
 
     if exp_version == "experiment":
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#1F262A")
