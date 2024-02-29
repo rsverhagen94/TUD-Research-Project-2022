@@ -72,7 +72,7 @@ def add_agents(builder, condition, exp_version):
                                         CollectableBlock: block_sense_range,
                                         None: other_sense_range,
                                         ObstacleObject: 2,
-                                        SmokeObject: 1})
+                                        SmokeObject: np.inf})
 
     for team in range(nr_teams):
         team_name = f"Team {team}"
@@ -84,6 +84,8 @@ def add_agents(builder, condition, exp_version):
             if exp_version=="experiment" and condition=="baseline":
                 brain = TutorialAgent(slowdown=1)
                 brain2 = BaselineAgent(slowdown=1)
+                brain3 = BaselineAgent(slowdown=1)
+                brain4 = BaselineAgent(slowdown=1)
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -92,6 +94,10 @@ def add_agents(builder, condition, exp_version):
             builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
             builder.add_agent((24,14), brain2, team=team_name, name="fire fighter",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+            builder.add_agent((0,13), brain3, team=team_name, name="Robbert",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+            builder.add_agent((0,11), brain4, team=team_name, name="Sebastiaan",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
 
 

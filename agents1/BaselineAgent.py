@@ -44,7 +44,9 @@ class Phase(enum.Enum):
     FIX_ORDER_GRAB = 26,
     FIX_ORDER_DROP = 27,
     REMOVE_OBSTACLE_IF_NEEDED = 28,
-    ENTER_ROOM = 29
+    ENTER_ROOM = 29,
+    PLAN_EXIT = 30,
+    FOLLOW_EXIT_PATH = 31
 
 
 class BaselineAgent(BW4TBrain):
@@ -83,6 +85,7 @@ class BaselineAgent(BW4TBrain):
         self._confidence = True
         self._rescued = []
         self._goalVic = None
+        self._location = '?'
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
@@ -92,6 +95,7 @@ class BaselineAgent(BW4TBrain):
         return state
 
     def decide_on_bw4t_action(self, state: State):
+        #print(self._phase)
         agent_name = state[self.agent_id]['obj_id']
         # Add team members
         for member in state['World']['team_members']:
@@ -107,8 +111,79 @@ class BaselineAgent(BW4TBrain):
                     self._goalLoc = tuple((int(msg.split()[2]), int(msg.split()[4])))
                     self._phase = Phase.PLAN_PATH_TO_VICTIM
                     return Idle.__name__, {'duration_in_ticks': 0}
+                if self.received_messages_content and 'Target' in self.received_messages_content[-1] and self._location == '?' and agent_name!='fire_fighter':
+                    self._phase = Phase.PLAN_PATH_TO_ROOM
+                    return Idle.__name__, {'duration_in_ticks': 0}
                 else:
                     return None, {}
+                
+            if Phase.PLAN_PATH_TO_ROOM==self._phase:
+                self._navigator.reset_full()
+                if agent_name and agent_name == 'sebastiaan':
+                    self._navigator.add_waypoints([(2, 7)])
+                if agent_name and agent_name == 'robbert':
+                    self._navigator.add_waypoints([(16, 21)])
+                self._phase=Phase.FOLLOW_PATH_TO_ROOM
+
+            if Phase.FOLLOW_PATH_TO_ROOM==self._phase:
+                self._state_tracker.update(state)
+                action = self._navigator.get_move_action(self._state_tracker)
+                if action!=None:
+                    return action,{}
+                self._phase=Phase.PLAN_ROOM_SEARCH_PATH
+                    
+            if Phase.ENTER_ROOM==self._phase:
+                self._state_tracker.update(state)                 
+                action = self._navigator.get_move_action(self._state_tracker)
+                if action!=None:
+                    return action,{}
+                self._phase=Phase.PLAN_ROOM_SEARCH_PATH
+
+            if Phase.PLAN_ROOM_SEARCH_PATH==self._phase:
+                if agent_name and agent_name == 'sebastiaan':
+                    area = 'area 5'
+                if agent_name and agent_name == 'robbert':
+                    area = 'area 13'
+                roomTiles = [info['location'] for info in state.values()
+                    if 'class_inheritance' in info 
+                    and 'AreaTile' in info['class_inheritance']
+                    and 'room_name' in info
+                    and info['room_name'] == area
+                ]
+                self._roomtiles=roomTiles               
+                self._navigator.reset_full()
+                self._navigator.add_waypoints(roomTiles)
+                self._phase=Phase.FOLLOW_ROOM_SEARCH_PATH
+
+            if Phase.FOLLOW_ROOM_SEARCH_PATH==self._phase:
+                self._state_tracker.update(state)
+                action = self._navigator.get_move_action(self._state_tracker)
+                if action!=None:                   
+                    for info in state.values():
+                        if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
+                            self._sendMessage('Found fire source!', 'Robbert')
+                            self._location = '✔'
+                    return action,{}
+                self._phase = Phase.PLAN_EXIT
+                #self._phase=Phase.INTRO0
+                #return Idle2.__name__,{'duration_in_ticks':0}
+
+            if Phase.PLAN_EXIT==self._phase:
+                self._navigator.reset_full()
+                if agent_name and agent_name == 'sebastiaan':
+                    loc = (0, 11)
+                if agent_name and agent_name == 'robbert':
+                    loc = (0, 13)
+                self._navigator.add_waypoints([loc])
+                self._phase=Phase.FOLLOW_EXIT_PATH
+
+            if Phase.FOLLOW_EXIT_PATH==self._phase:
+                self._state_tracker.update(state)
+                action = self._navigator.get_move_action(self._state_tracker)
+                if action != None:
+                    return action, {}
+                self._phase=Phase.INTRO0
+                return Idle2.__name__,{'duration_in_ticks':0}
 
             if Phase.PLAN_PATH_TO_VICTIM == self._phase:
                 self._navigator.reset_full()

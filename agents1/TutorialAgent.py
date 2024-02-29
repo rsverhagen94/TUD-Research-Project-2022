@@ -118,6 +118,12 @@ class TutorialAgent(BW4TBrain):
                     #self._co = info['co_ppm']
                     #self._hcn = info['hcn_ppm']
 
+        if self.received_messages_content and self.received_messages_content[-1] == 'Found fire source!':
+            self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
+            action_kwargs = add_object([(2,8)], "/images/fire2.svg", 3, 1, 'fire source')
+            self._location = '✔' 
+            return AddObject.__name__, action_kwargs
+
         #if not state[{'class_inheritance':'SmokeObject'}]:
         #    self._co = 0
         #    self._hcn = 0
@@ -127,7 +133,7 @@ class TutorialAgent(BW4TBrain):
         if self._location == '✔':
             self._locationCat = 'known'
 
-        if self._timeLeft - self._counter_value not in [10,20,30,40,50,60,70,80, self._time]: #replace by list keeping track of all times where plots are send
+        if self._timeLeft - self._counter_value not in [2,20,30,40,50,60,70,80, self._time]: #replace by list keeping track of all times where plots are send
             self._plotGenerated = False
 
         while True:     
@@ -190,7 +196,7 @@ class TutorialAgent(BW4TBrain):
                     return None, {}
 
 
-            if self._timeLeft - self._counter_value == 10 and self._location == '?' and not self._plotGenerated:
+            if self._timeLeft - self._counter_value == 2 and self._location == '?' and not self._plotGenerated:
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/SaR_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._counter_value) + ".svg"
                 sensitivity = self._R2PyPlotLocate(self._totalVictimsCat, self._duration, self._counter_value, self._temperatureCat, image_name)
                 #sensitivity = self._R2PyPlotLocate('multiple', self._duration, self._counter_value, self._temperatureCat, image_name)
@@ -225,11 +231,12 @@ class TutorialAgent(BW4TBrain):
                         self._phase = self._lastPhase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
                         self._sendMessage('Sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
+                        self._sendMessage('Target', 'Brutus')
                         self._time = self._timeLeft - self._counter_value
                         self._phase = self._lastPhase
-                        self._backup = True
-                        action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'backup')
-                        return AddObject.__name__, action_kwargs
+                        #self._backup = True
+                        #action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'backup')
+                        #return AddObject.__name__, action_kwargs
                     else:
                         return None, {}
                 
@@ -239,27 +246,27 @@ class TutorialAgent(BW4TBrain):
                     self._sendMessage('Sending in fire fighters to help locate because the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
                     self._time = self._timeLeft - self._counter_value
                     self._phase = self._lastPhase
-                    self._backup = True
+                    #self._backup = True
                     action_kwargs = add_object([(2,4),(9,6),(2,20),(9,18)], "/static/images/rescue-man-final3.svg", 1, 1, 'backup')
                     return AddObject.__name__, action_kwargs
                 if self._decide == 'Brutus' and self._timeLeft - self._counter_value == self._time + 1 and self._temperatureCat == 'higher':
                     self._sendMessage('Not sending in fire fighters because the temperature is higher than the auto-ignition temperatures of present substances.', 'Brutus')
-                    self._backup = False
+                    #self._backup = False
                     self._phase = self._lastPhase
                 else:
                     return None, {}
                 
                 
-            if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
-                for info in state.values():
-                    if 'obj_id' in info.keys() and 'backup' in info['obj_id']:
-                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':0}
+            #if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
+            #    for info in state.values():
+            #        if 'obj_id' in info.keys() and 'backup' in info['obj_id']:
+            #            return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':0}
                 
-            if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
-                self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
-                action_kwargs = add_object([(2,8)], "/images/fire2.svg", 3, 1, 'fire source')
-                self._location = '✔' 
-                return AddObject.__name__, action_kwargs
+            #if self._timeLeft - self._counter_value == self._time + 2 and self._backup:
+            #    self._sendMessage('Fire source located and pinned on the map.', 'Brutus')
+            #    action_kwargs = add_object([(2,8)], "/images/fire2.svg", 3, 1, 'fire source')
+            #    self._location = '✔' 
+            #    return AddObject.__name__, action_kwargs
                 
             if Phase.FIND_NEXT_GOAL==self._phase:
                 self._answered = False

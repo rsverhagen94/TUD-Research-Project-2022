@@ -54,9 +54,22 @@ class Idle(Action):
         return IdleResult(IdleResult.RESULT_SUCCESS, True)
     
     def mutate(self, grid_world, agent_id, **kwargs):
-        if 'fire_fighter' in agent_id:
+        if 'fire_fighter' in agent_id or 'robbert' in agent_id or 'sebastiaan' in agent_id:
             reg_ag = grid_world.registered_agents[agent_id]
             reg_ag.change_property("visualize_opacity", 1)
+        return IdleResult(IdleResult.RESULT_SUCCESS, True)
+    
+class Idle2(Action):
+    def __init__(self, duration_in_ticks=1):
+        super().__init__(duration_in_ticks)
+
+    def is_possible(self, grid_world, agent_id, **kwargs):
+        return IdleResult(IdleResult.RESULT_SUCCESS, True)
+    
+    def mutate(self, grid_world, agent_id, **kwargs):
+        if 'fire_fighter' in agent_id or 'robbert' in agent_id or 'sebastiaan' in agent_id:
+            reg_ag = grid_world.registered_agents[agent_id]
+            reg_ag.change_property("visualize_opacity", 0)
         return IdleResult(IdleResult.RESULT_SUCCESS, True)
 
 
