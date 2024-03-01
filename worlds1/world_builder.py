@@ -82,10 +82,10 @@ def add_agents(builder, condition, exp_version):
             #if exp_version=="experiment" and condition=="baseline":
             #    brain = BaselineAgent(slowdown=8)
             if exp_version=="experiment" and condition=="baseline":
-                brain = brutus(slowdown=1)
-                brain2 = firefighter(slowdown=1)
-                brain3 = firefighter(slowdown=1)
-                brain4 = firefighter(slowdown=1)
+                brain = brutus()
+                brain2 = firefighter()
+                brain3 = firefighter()
+                brain4 = firefighter()
 
             if exp_version=="experiment":
                 loc = (24,12)
@@ -93,11 +93,11 @@ def add_agents(builder, condition, exp_version):
                 loc = (16,8)
             builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
-            builder.add_agent((24,14), brain2, team=team_name, name="fire fighter",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+            builder.add_agent((24,14), brain2, team=team_name, name="fire fighter 1",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-            builder.add_agent((0,13), brain3, team=team_name, name="Robbert",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+            builder.add_agent((0,13), brain3, team=team_name, name="fire fighter 3",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-            builder.add_agent((0,11), brain4, team=team_name, name="Sebastiaan",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+            builder.add_agent((0,11), brain4, team=team_name, name="fire fighter 2",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
                               sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
 
 

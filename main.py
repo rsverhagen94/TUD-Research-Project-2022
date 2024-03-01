@@ -33,7 +33,6 @@ if __name__ == "__main__":
         print("Started world...")
         world = builder.get_world()
         builder.api_info['matrx_paused'] = True
-        load_R_to_Py()
         world.run(builder.api_info)
 
         if choice1=="experiment":

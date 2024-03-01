@@ -42,9 +42,8 @@ class Phase(enum.Enum):
 
     
 class brutus(custom_agent_brain):
-    def __init__(self, slowdown:int):
-        super().__init__(slowdown)
-        self._slowdown = slowdown
+    def __init__(self):
+        super().__init__()
         self._phase=Phase.FIND_NEXT_GOAL
         self._room_victims = []
         self._searched_rooms = []
@@ -70,12 +69,12 @@ class brutus(custom_agent_brain):
         self._location = '?'
         self._distance = '?'
         self._tactic = 'offensive'
+        self._R_loaded = False
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, 
-            action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)
-        #load_R_to_Py()        
+            action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)  
 
     def filter_bw4t_observations(self, state):
         self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
@@ -88,6 +87,9 @@ class brutus(custom_agent_brain):
         return state
 
     def decide_on_bw4t_action(self, state:State):
+        if not self._R_loaded:
+            load_R_to_Py()
+            self._R_loaded = True
         print(self._phase)
         self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
         self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
@@ -121,7 +123,7 @@ class brutus(custom_agent_brain):
         if self._location == '✔':
             self._location_cat = 'known'
 
-        if self._time_left - self._resistance not in [2, 20, 30, 40, 50, 60, 70, 80, self._time]: #replace by list keeping track of all times where plots are send
+        if self._time_left - self._resistance not in [4, 20, 30, 40, 50, 60, 70, 80, self._time]: #replace by list keeping track of all times where plots are send
             self._plot_generated = False
 
         while True:     
@@ -181,7 +183,7 @@ class brutus(custom_agent_brain):
                 else:
                     return None, {}
 
-            if self._time_left - self._resistance == 2 and self._location == '?' and not self._plot_generated:
+            if self._time_left - self._resistance == 4 and self._location == '?' and not self._plot_generated:
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._resistance) + ".svg"
                 sensitivity = R_to_Py_plot_locate(self._total_victims_cat, self._duration, self._resistance, self._temperature_cat, image_name)
                 self._plot_generated = True
@@ -214,7 +216,8 @@ class brutus(custom_agent_brain):
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
                         self._send_message('Sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
-                        self._send_message('Target', 'Brutus')
+                        # replace by location obtained from world/task configuration
+                        self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
                         self._phase = self._last_phase
                     else:
                         return None, {}

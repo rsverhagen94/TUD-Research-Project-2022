@@ -9,8 +9,7 @@ class custom_agent_brain(agent_brain, ABC):
     BW4T agents must implement decide_on_bw4t_action
     """
     
-
-    def __init__(self, slowdown:int):
+    def __init__(self):
         '''
         @param slowdown an integer. Basically this sets action_duration
         field to the given slowdown. 1 implies normal speed
@@ -19,7 +18,6 @@ class custom_agent_brain(agent_brain, ABC):
         This is to ensure that agents run at the required speed.
         FIXME this is hacky. These parameters should really be private.
         '''
-        self.__slowdown = slowdown
         super().__init__()
     
     def decide_on_action(self, state:State):
@@ -37,22 +35,6 @@ class custom_agent_brain(agent_brain, ABC):
         # remove doormat from water_locs
         if state[{"name": "Brutus"}]['location'] in water_locs and state[{"name": "Brutus"}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
             params['action_duration'] = 13
-        else:
-            params['action_duration'] = self.__slowdown
-        #if act == 'RemoveObjectTogether' and 'fire' in params['object_id']:
-        #    if params['size'] == 1.75:
-        #        params['action_duration'] = 50
-        #    if params['size'] == 2: 
-        #        params['action_duration'] = 100
-        #    if params['size'] == 3.5:
-        #        params['action_duration'] = 200
-        #if act == 'RemoveObject' and 'fire' in params['object_id']:
-        #    if params['size'] == 1.75:
-        #        params['action_duration'] = 100
-        #    if params['size'] == 2: 
-        #        params['action_duration'] = 200
-        #    if params['size'] == 3:
-        #        params['action_duration'] = 1
         if act == 'RemoveObject' and 'iron' in params['object_id']:
             if params['size'] == 0.75:
                 params['action_duration'] = 1

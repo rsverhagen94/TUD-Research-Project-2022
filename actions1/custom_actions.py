@@ -59,7 +59,7 @@ class Idle(Action):
             reg_ag.change_property("visualize_opacity", 1)
         return IdleResult(IdleResult.RESULT_SUCCESS, True)
     
-class Idle2(Action):
+class IdleDisappear(Action):
     def __init__(self, duration_in_ticks=1):
         super().__init__(duration_in_ticks)
 
