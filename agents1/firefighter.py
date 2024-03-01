@@ -102,8 +102,8 @@ class firefighter(custom_agent_brain):
                 action = self._navigator.get_move_action(self._state_tracker)
                 if action != None:                   
                     for info in state.values():
-                        if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
-                            self._sendMessage('Found fire source!', agent_name.replace('_', ' ').capitalize())
+                        if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
+                            self._send_message('Found fire source!', agent_name.replace('_', ' ').capitalize())
                             self._location = '✔'
                     return action, {}
                 self._phase = Phase.PLAN_EXIT
@@ -158,12 +158,12 @@ class firefighter(custom_agent_brain):
 
             if Phase.DROP_VICTIM == self._phase:
                 self._rescued.append(self._goal_victim)
-                self._sendMessage('Delivered ' + self._goal_victim + ' at the drop zone.', agent_name.replace('_', ' ').capitalize())
+                self._send_message('Delivered ' + self._goal_victim + ' at the drop zone.', agent_name.replace('_', ' ').capitalize())
                 self._phase = Phase.WAIT_FOR_CALL
                 self._goal_victim = None
                 return Drop.__name__, {'duration_in_ticks':0}
 
-    def _sendMessage(self, mssg, sender):
+    def _send_message(self, mssg, sender):
         msg = Message(content=mssg, from_id=sender)
         if msg.content not in self.received_messages_content:
             self.send_message(msg)

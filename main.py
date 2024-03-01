@@ -32,7 +32,7 @@ if __name__ == "__main__":
         builder.startup(media_folder=media_folder)
         print("Started world...")
         world = builder.get_world()
-        builder.api_info['matrx_paused'] = True
+        builder.api_info['matrx_paused'] = False
         world.run(builder.api_info)
 
         if choice1=="experiment":

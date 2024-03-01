@@ -27,28 +27,28 @@ class custom_agent_brain(agent_brain, ABC):
         act,params = self.decide_on_bw4t_action(state)
         params['grab_range']=1
         params['max_objects']=1
-        water_locs = []
-        if state[{"name": "water"}]:
-            for water in state[{"name": "water"}]:
-                if water['location'] not in water_locs:
-                    water_locs.append(water['location'])
+        #water_locs = []
+        #if state[{"name": "water"}]:
+        #    for water in state[{"name": "water"}]:
+        #        if water['location'] not in water_locs:
+        #            water_locs.append(water['location'])
         # remove doormat from water_locs
-        if state[{"name": "Brutus"}]['location'] in water_locs and state[{"name": "Brutus"}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
-            params['action_duration'] = 13
-        if act == 'RemoveObject' and 'iron' in params['object_id']:
-            if params['size'] == 0.75:
-                params['action_duration'] = 1
-            if params['size'] == 1:
-                params['action_duration'] = 1
-            if params['size'] == 1.25:
-                params['action_duration'] = 1
-        if act == 'RemoveObjectTogether' and 'iron' in params['object_id']:
-            if params['size'] == 0.75:
-                params['action_duration'] = 50
-            if params['size'] == 1:
-                params['action_duration'] = 100
-            if params['size'] == 1.25:
-                params['action_duration'] = 200
+        #if state[{"name": "Brutus"}]['location'] in water_locs and state[{"name": "Brutus"}]['location'] not in [(3,5),(9,5),(15,5),(21,5),(3,6),(9,6),(15,6),(3,17),(9,17),(15,17),(3,18),(9,18),(15,18),(21,18)]:
+        #    params['action_duration'] = 13
+        #if act == 'RemoveObject' and 'iron' in params['object_id']:
+        #    if params['size'] == 0.75:
+        #        params['action_duration'] = 1
+        #    if params['size'] == 1:
+        #        params['action_duration'] = 1
+        #    if params['size'] == 1.25:
+        #        params['action_duration'] = 1
+        #if act == 'RemoveObjectTogether' and 'iron' in params['object_id']:
+        #    if params['size'] == 0.75:
+        #        params['action_duration'] = 50
+        #    if params['size'] == 1:
+        #        params['action_duration'] = 100
+        #    if params['size'] == 1.25:
+        #        params['action_duration'] = 200
 
         return act,params
     

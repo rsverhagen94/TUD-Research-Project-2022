@@ -19,6 +19,7 @@ from matrx.messages.message_manager import MessageManager
 from actions1.custom_actions import Backup, RemoveObjectTogether, CarryObjectTogether, DropObjectTogether, CarryObject, Drop, Injured, AddObject
 
 class Phase(enum.Enum):
+    INTRO=0,
     LOCATE=1,
     FIND_NEXT_GOAL=2,
     PICK_UNSEARCHED_ROOM=3,
@@ -34,8 +35,6 @@ class Phase(enum.Enum):
     PLAN_PATH_TO_DROPPOINT=13,
     FOLLOW_PATH_TO_DROPPOINT=14,
     DROP_VICTIM=15,
-    BACKUP=16,
-    BACKUP2=17,
     TACTIC=18,
     PRIORITY=20,
     RESCUE=21
@@ -44,7 +43,7 @@ class Phase(enum.Enum):
 class brutus(custom_agent_brain):
     def __init__(self):
         super().__init__()
-        self._phase=Phase.FIND_NEXT_GOAL
+        self._phase=Phase.INTRO
         self._room_victims = []
         self._searched_rooms = []
         self._found_victims = []
@@ -53,43 +52,56 @@ class brutus(custom_agent_brain):
         self._send_messages = []
         self._to_do = []
         self._to_search = []
+        self._fire_locations = []
+        self._area_tiles = []
+        self._situations = []
+        self._situation = None
         self._victim_locations = {}
-        self._current_door=None  
+        self._current_door = None
+        self._current_room = None
         self._goal_victim = None
         self._goal_location = None
+        self._id = None
         self._fire_source_coords = None
+        self._current_location = None
         self._plot_generated = False
         self._time_left = 90
         self._time = 0
-        self._resistance = 90
-        self._duration = 15
         self._smoke = '?'
         self._temperature = '<≈'
         self._temperature_cat = 'close'
         self._location = '?'
         self._distance = '?'
         self._tactic = 'offensive'
-        self._R_loaded = False
+
+    def update_time(self):
+        with self._counter_lock:
+            self._resistance -= 1
+            self._duration += 1
+            if self._resistance < 0:
+                self._resistance = 90  # Reset the counter after reaching 0
+                self._duration = 0
+
+        self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
+        self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
+        # Schedule the next print
+        threading.Timer(6, self.update_time).start()
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, 
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)  
+        load_R_to_Py()
+        self._counter_lock = threading.Lock()
+        self._resistance = 91
+        self._duration = 14
+        # Start the initial print
+        self.update_time()
 
     def filter_bw4t_observations(self, state):
-        self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
-        if int(self._second) % 6 == 0 and int(self._second) not in self._modulos:
-            self._modulos.append(int(self._second))
-            self._resistance-=1
-            self._duration+=1
-        self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
-        self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
         return state
 
     def decide_on_bw4t_action(self, state:State):
-        if not self._R_loaded:
-            load_R_to_Py()
-            self._R_loaded = True
         print(self._phase)
         self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
         self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
@@ -97,16 +109,21 @@ class brutus(custom_agent_brain):
         self._send_message('Distance: ' + self._distance + '.', 'RescueBot')
         self._send_message('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
+        self._current_location = state[self.agent_id]['location']
+
         for info in state.values():
+            if 'class_inheritance' in info and 'AreaTile' in info['class_inheritance'] and info['location'] not in self._area_tiles:
+                self._area_tiles.append(info['location'])
             if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
                 self._send_message('Found fire source!', 'Brutus')
                 self._location = '✔'
                 self._smoke = info['smoke']
-            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                self._send_message('Found fire!', 'Brutus')
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and info['location'] not in self._fire_locations:
+                self._send_message('Found fire in ' + self._current_room + '.', 'Brutus')
+                self._fire_locations.append(info['location'])
                 self._smoke = info['smoke']
                 if self._tactic == 'defensive':
-                     self._send_message('Extinguishing fire...', 'Brutus')
+                     self._send_message('Extinguishing fire in ' + self._current_room + '...', 'Brutus')
                      return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 50}
 
         if self._location == '✔':
@@ -125,15 +142,34 @@ class brutus(custom_agent_brain):
         if self._location == '✔':
             self._location_cat = 'known'
 
-        if self._time_left - self._resistance not in [4, 20, 30, 40, 50, 60, 70, 80, self._time]: #replace by list keeping track of all times where plots are send
+        if self._time_left - self._resistance not in [self._time]: #replace by list keeping track of all times where plots are send
             self._plot_generated = False
 
-        while True:     
-            if self._time_left - self._resistance == 20 and not self._plot_generated or self._time_left - self._resistance == 30 and not self._plot_generated or self._time_left - self._resistance == 40 and not self._plot_generated \
-                or self._time_left - self._resistance == 50 and not self._plot_generated or self._time_left - self._resistance == 60 and not self._plot_generated or self._time_left - self._resistance == 70 and not self._plot_generated \
-                or self._time_left - self._resistance == 80 and not self._plot_generated:
+        while True:
+            if Phase.INTRO == self._phase:
+                self._send_message('If you are ready to begin our mission, press the "Continue" button.', 'Brutus')
+                if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
+                    self._phase = Phase.FIND_NEXT_GOAL
+                else:
+                    return None, {}
+
+            if self._time_left - self._resistance >= 20 and self._time_left - self._resistance <= 25:
+                self._situation = 'switch 1'
+
+            if self._time_left - self._resistance >= 40 and self._time_left - self._resistance <= 45:
+                self._situation = 'switch 2'
+
+            if self._time_left - self._resistance >= 60 and self._time_left - self._resistance <= 65:
+                self._situation = 'switch 3'
+
+            if self._time_left - self._resistance >= 80 and self._time_left - self._resistance <= 85:
+                self._situation = 'switch 4'
+
+            if self._current_location not in self._area_tiles and not self._plot_generated and self._situation != None and self._situation not in self._situations:
+                self._situations.append(self._situation)
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._resistance) + ".svg"
                 sensitivity = R_to_Py_plot_tactic(self._total_victims_cat, self._location_cat, self._duration, self._resistance, image_name)
+                #sensitivity = 5
                 self._plot_generated = True
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
 
@@ -144,6 +180,7 @@ class brutus(custom_agent_brain):
                                     This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                     + image_name, 'Brutus')
                     self._decide = 'human'
+                    self._time = self._time_left - self._resistance
                     self._last_phase = self._phase
                     self._phase = Phase.TACTIC
                 
@@ -160,34 +197,39 @@ class brutus(custom_agent_brain):
 
             if Phase.TACTIC == self._phase:
                 if self._decide == 'human':
-                    self._send_message('If you want to continue with the offensive inside deployment, press the "Continue" button. \
+                    self._send_message('If you want to continue with the offensive inside deployment going on for ' + str(self._time) + ' minutes now, press the "Continue" button. \
                                     If you want to switch to a defensive inside deployment, press the "Switch" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Continuing with the offensive inside deployment because you decided to.', 'Brutus')
+                        self._send_message('Continuing with the offensive inside deployment that has been going on for ' + str(self._time) + ' minutes, because you decided to.', 'Brutus')
                         self._tactic = 'offensive'
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
-                        self._send_message('Switching to a defensive inside deployment because you decided to.', 'Brutus')
+                        self._send_message('Switching to a defensive inside deployment after the offensive inside deployment of ' + str(self._time) + ' minutes, because you decided to.', 'Brutus')
                         self._tactic = 'defensive'
                         self._phase = self._last_phase
                     else:
                         return None, {}
 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SWITCHING TACTICS, FOR EXAMPLE WRT HOW DANGEROUS SITUATION IS (CHECK GUIDELINES)    
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._resistance > 45:
-                    self._send_message('Continuing with the offensive inside deployment because the estimated fire resistance to collapse is higher than 45 minutes.', 'Brutus')
-                    self._tactic = 'offensive'
-                    self._phase = self._last_phase
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._resistance <= 45:
-                    self._send_message('Switching to the defensive inside deployment because the estimated fire resistance to collapse is less than 45 minutes.', 'Brutus')
-                    self._tactic = 'defensive'
-                    self._phase = self._last_phase
+                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                    if self._resistance > 15 and self._duration < 45:
+                        self._send_message('Continuing with the offensive inside deployment because the fire duration (' + str(self._duration) + ' minutes) is less than 45 minutes \
+                                            and the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes.', 'Brutus')
+                        self._tactic = 'offensive'
+                        self._phase = self._last_phase
+                    else:
+                        self._send_message('Switching to the defensive inside deployment after the offensive inside deployment of ' + str(self._time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                        self._tactic = 'defensive'
+                        self._phase = self._last_phase
                 else:
                     return None, {}
 
-            if self._time_left - self._resistance == 4 and self._location == '?' and not self._plot_generated:
+            if self._time_left - self._resistance >= 10 and self._time_left - self._resistance <= 15 and self._location == '?' and not self._plot_generated and \
+                self._current_location not in self._area_tiles and 'locate' not in self._situations:
+                self._situations.append('locate')
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._resistance) + ".svg"
                 sensitivity = R_to_Py_plot_locate(self._total_victims_cat, self._duration, self._resistance, self._temperature_cat, image_name)
+                #sensitivity = 5
                 self._plot_generated = True
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                 if sensitivity >= 4.2:
@@ -196,6 +238,7 @@ class brutus(custom_agent_brain):
                                       This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                       + image_name, 'Brutus')
                     self._decide = 'human'
+                    self._time = self._time_left - self._resistance
                     self._last_phase = self._phase
                     self._phase = Phase.LOCATE
 
@@ -225,18 +268,21 @@ class brutus(custom_agent_brain):
                         return None, {}
                 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SENDING IN FIREFIGHTERS TO LOCATE FIRE SOURCE, FOR EXAMPLE WRT RESISTENCE TO COLLAPSE
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._temperature_cat == 'close' \
-                    or self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._temperature_cat == 'lower':
-                    self._send_message('Sending in fire fighters to help locate because the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
-                    self._send_message('Target', 'Brutus')
-                    self._phase = self._last_phase
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._temperature_cat == 'higher':
-                    self._send_message('Not sending in fire fighters because the temperature is higher than the auto-ignition temperatures of present substances.', 'Brutus')
-                    self._phase = self._last_phase
+                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                    if self._temperature_cat != 'higher' and self._resistance > 15:
+                        self._send_message('Sending in fire fighters to help locate because the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes \
+                                           and the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
+                        # replace by location obtained from world/task configuration
+                        self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
+                        self._phase = self._last_phase
+                    else:
+                        self._send_message('Not sending in fire fighters because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
+                        self._phase = self._last_phase
                 else:
                     return None, {}
                 
             if Phase.FIND_NEXT_GOAL == self._phase:
+                self._id = None
                 self._goal_victim = None
                 self._goal_location = None
                 zones = self._get_drop_zones(state)
@@ -307,6 +353,7 @@ class brutus(custom_agent_brain):
                 if self._door['room_name'] == 'area 1':
                     self._doormat = (2,4)
                 doorLoc = self._doormat
+                self._current_room = self._door['room_name']
                 self._navigator.add_waypoints([doorLoc])
                 self._phase = Phase.FOLLOW_PATH_TO_ROOM
 
@@ -324,69 +371,11 @@ class brutus(custom_agent_brain):
                 for info in state.values():
                     if 'class_inheritance' in info and 'IronObject' in info['class_inheritance'] and 'iron' in info['obj_id'] and info not in objects:
                         objects.append(info)
-                        self._send_message('Iron debris is blocking ' + str(self._door['room_name']) + '. Removing iron debris...', 'Brutus')
-                        return RemoveObject.__name__, {'object_id': info['obj_id'],'size':info['visualization']['size']}
-    
-                        #if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
-                        #    self._send_message('Removing iron debris blocking ' + str(self._door['room_name']) + ' together with fire fighter.','Brutus')
-                        #    self._phase = Phase.BACKUP
-                        #    return Backup.__name__,{}
+                        self._send_message('Iron debris is blocking ' + str(self._door['room_name']) + '. Removing iron debris ...', 'Brutus')
+                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'duration_in_ticks': 0}
 
-                if len(objects)==0:
+                if len(objects) == 0:
                     self._phase = Phase.ENTER_ROOM
-
-
-            if Phase.BACKUP == self._phase:
-                for info in state.values():
-                    if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                        if info['percentage_lel'] > 10 or self._co > 500 or self._hcn > 40:
-                            self._send_message('fire at ' + str(self._door['room_name']) + ' too dangerous for fire fighter!! \n \n Going to abort extinguishing.','Brutus')
-                            self._searched_rooms.append(self._door['room_name'])
-                            self._send_messages = []
-                            self.received_messages = []
-                            self.received_messages_content = []
-                            self._phase = Phase.FIND_NEXT_GOAL
-                            return Injured.__name__, {'duration_in_ticks':50}
-                        else:
-                            self._phase = Phase.ENTER_ROOM
-                            return RemoveObjectTogether.__name__, {'object_id': info['obj_id'], 'size':info['visualization']['size']}
-
-            if Phase.BACKUP2 == self._phase:
-                self._goal_victim = None
-                self._goal_location = None
-                zones = self._get_drop_zones(state)
-                remaining_zones = []
-                remaining_victims = []
-                remaining = {}
-                for info in zones:
-                    if str(info['img_name'])[8:-4] not in self._collected_victims:
-                        remaining_zones.append(info)
-                        remaining_victims.append(str(info['img_name'])[8:-4])
-                        remaining[str(info['img_name'])[8:-4]] = info['location']
-                if remaining_zones:
-                    self._remaining_zones = remaining_zones
-                    self._remaining = remaining
-                if not remaining_zones:
-                    return None, {}
-
-                for vic in remaining_victims:
-                    if vic in self._found_victims and vic not in self._to_do:
-                        self._goal_victim = vic
-                        self._goal_location = remaining[vic]
-                for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                        if info['percentage_lel'] > 10 or self._co > 500 or self._hcn > 40:
-                            self._send_message('fire at ' + str(self._door['room_name']) + ' too dangerous for fire fighter!! \n \n Going to abort extinguishing.','Brutus')
-                            self._searched_rooms.append(self._door['room_name'])
-                            self._collected_victims.append(self._goal_victim)
-                            self._send_messages = []
-                            self.received_messages = []
-                            self.received_messages_content = []
-                            self._phase = Phase.FIND_NEXT_GOAL
-                            return Injured.__name__, {'duration_in_ticks': 50}
-                        else:
-                            self._phase = Phase.PLAN_PATH_TO_VICTIM
-                            return RemoveObjectTogether.__name__, {'object_id': info['obj_id'], 'size': info['visualization']['size']}
                     
             if Phase.ENTER_ROOM == self._phase:
                 self._state_tracker.update(state)                 
@@ -428,15 +417,15 @@ class brutus(custom_agent_brain):
                                     self._phase = Phase.FIND_NEXT_GOAL
 
                             if 'healthy' not in vic and vic not in self._found_victims:
-                                self._recentVic = vic
+                                self._recent_victim = vic
                                 self._found_victims.append(vic)
                                 self._victim_locations[vic] = {'location': info['location'], 'room': self._door['room_name'], 'obj_id': info['obj_id']}
                                 self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '.','Brutus')
 
                                 if 'critical' in vic and not self._plot_generated:
                                     image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
-                                    #distance = calculate_distances(self._fire_source_coords, self._victim_locations[vic]['location'])
-                                    distance = calculate_distances((2,8), self._victim_locations[vic]['location'])
+                                    distance = calculate_distances(self._fire_source_coords, self._victim_locations[vic]['location'])
+                                    #distance = calculate_distances((2,8), self._victim_locations[vic]['location'])
                                     if distance < 14:
                                         self._distance = 'small'
                                     if distance >= 14:
@@ -446,6 +435,7 @@ class brutus(custom_agent_brain):
                                     if self._temperature_cat == 'higher':
                                         temperature = 'higher'
                                     sensitivity = R_to_Py_plot_rescue(self._duration, self._resistance, temperature, self._distance, image_name)
+                                    #sensitivity = 5
                                     self._plot_generated = True
                                     image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                                     if sensitivity >= 4.2:
@@ -478,9 +468,10 @@ class brutus(custom_agent_brain):
                         self._vic_string = 'victims'
 
                     for vic in self._room_victims:
-                        if 'mild' in self._recentVic and not self._plot_generated:
+                        if 'mild' in self._recent_victim and not self._plot_generated:
                             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
                             sensitivity = R_to_Py_plot_priority(len(self._room_victims), self._smoke, self._duration, self._location_cat, image_name)
+                            sensitivity = 5
                             self._plot_generated = True
                             image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
                             if sensitivity >= 4.2:
@@ -510,57 +501,56 @@ class brutus(custom_agent_brain):
             
             if Phase.RESCUE == self._phase:
                 if self._decide == 'human':
-                    self._send_message('If you want to send in fire fighters to rescue ' + self._recentVic + ', press the "Fire fighter" button. \
+                    self._send_message('If you want to send in fire fighters to rescue ' + self._recent_victim + ', press the "Fire fighter" button. \
                                       If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
-                        self._send_message('Sending in fire fighters to rescue ' + self._recentVic + ' because you decided to.', 'Brutus')
-                        vic_x = str(self._victim_locations[self._recentVic]['location'][0])
-                        vic_y = str(self._victim_locations[self._recentVic]['location'][1])
-                        drop_x = str(self._remaining[self._recentVic][0])
-                        drop_y = str(self._remaining[self._recentVic][1])
+                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because you decided to.', 'Brutus')
+                        vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
+                        vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
+                        drop_x = str(self._remaining[self._recent_victim][0])
+                        drop_y = str(self._remaining[self._recent_victim][1])
                         self._send_message('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
-                        if self._recentVic not in self._collected_victims:
-                            self._collected_victims.append(self._recentVic)
+                        if self._recent_victim not in self._collected_victims:
+                            self._collected_victims.append(self._recent_victim)
                         if self._door['room_name'] not in self._searched_rooms:
                             self._searched_rooms.append(self._door['room_name'])
                         return None, {}
                     
-                    if self.received_messages_content and self._recentVic in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
+                    if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
                         self._phase = Phase.FIND_NEXT_GOAL
 
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Not sending in fire fighters to rescue ' + self._recentVic + ' because you decided to.', 'Brutus')
-                        self._collected_victims.append(self._recentVic)
+                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because you decided to.', 'Brutus')
+                        self._collected_victims.append(self._recent_victim)
                         self._searched_rooms.append(self._door['room_name'])
                         self._phase = Phase.FIND_NEXT_GOAL
                     else:
                         return None, {}
 
                 # ADD MORE CONDITIONS
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._temperature_cat != 'higher' and self._resistance > 15:
-                    self._send_message('Sending in fire fighters to rescue ' + self._recentVic + ' because the temperature is lower than the auto-ignition temperatures of present substances \
-                                      and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
-                    vic_x = str(self._victim_locations[self._recentVic]['location'][0])
-                    vic_y = str(self._victim_locations[self._recentVic]['location'][1])
-                    drop_x = str(self._remaining[self._recentVic][0])
-                    drop_y = str(self._remaining[self._recentVic][1])
-                    self._send_message('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
-                    if self._recentVic not in self._collected_victims:
-                        self._collected_victims.append(self._recentVic)
-                    if self._door['room_name'] not in self._searched_rooms:
+                if self._decide == 'Brutus' and self._time_left - self._resistance >= self._time + 1 and self._time_left - self._resistance <= self._time + 2: #increase to solve issues
+                    if self._temperature_cat != 'higher' and self._resistance > 15:
+                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
+                                            and the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes.', 'Brutus')
+                        vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
+                        vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
+                        drop_x = str(self._remaining[self._recent_victim][0])
+                        drop_y = str(self._remaining[self._recent_victim][1])
+                        self._send_message('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
+                        if self._recent_victim not in self._collected_victims:
+                            self._collected_victims.append(self._recent_victim)
+                        if self._door['room_name'] not in self._searched_rooms:
+                            self._searched_rooms.append(self._door['room_name'])
+                        return None, {}
+                    else:
+                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
+                        self._collected_victims.append(self._recent_victim)
                         self._searched_rooms.append(self._door['room_name'])
-                    return None, {}
+                        self._phase = Phase.FIND_NEXT_GOAL
                 
-                if self.received_messages_content and self._recentVic in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1] and self._decide == 'Brutus':
+                if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1] and self._decide == 'Brutus':
                     self._phase = Phase.FIND_NEXT_GOAL
-
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._temperature_cat == 'higher' and self._resistance <= 15:
-                    self._send_message('Not sending in fire fighters to rescue ' + self._recentVic + ' because the temperature is higher than the auto-ignition temperatures of present substances \
-                                      and the estimated fire resistance to collapse is less than 15 minutes.', 'Brutus')
-                    self._collected_victims.append(self._recentVic)
-                    self._searched_rooms.append(self._door['room_name'])
-                    self._phase = Phase.FIND_NEXT_GOAL
-                
+   
                 else:
                     return None, {}
 
@@ -570,26 +560,31 @@ class brutus(custom_agent_brain):
                                       If you want to first evacuate the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ', press the "Evacuate" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Extinguish':
                         self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because you decided to.', 'Brutus')
-                        self._phase = Phase.FIND_NEXT_GOAL
                         for info in state.values():
-                            if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                                return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 50}
+                            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                                self._id = info['obj_id']
+                                return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
                     if self.received_messages_content and self.received_messages_content[-1] == 'Evacuate':
                         self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because you decided to.', 'Brutus')
+                        self._phase = Phase.FIND_NEXT_GOAL
+                    if self._id and not state[{'obj_id': self._id}]:
                         self._phase = Phase.FIND_NEXT_GOAL
                     else:
                         return None, {}
                 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._location == '?' and self._smoke == 'fast':
-                    self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is not located yet and the smoke is spreading fast.', 'Brutus')
+                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                    if self._location == '?' and self._smoke == 'fast':
+                        self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is not located yet and the smoke is spreading fast.', 'Brutus')
+                        self._phase = Phase.FIND_NEXT_GOAL
+                    else:
+                        self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because these are the general guidelines.', 'Brutus')
+                        for info in state.values():
+                            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                                self._id = info['obj_id']
+                                return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
+                if self._id and not state[{'obj_id': self._id}]:
                     self._phase = Phase.FIND_NEXT_GOAL
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1 and self._location != '?' and self._smoke != 'fast':
-                    self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is located and the smoke is not spreading fast.', 'Brutus')
-                    self._phase = Phase.FIND_NEXT_GOAL
-                    for info in state.values():
-                        if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                            return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range':500, 'duration_in_ticks':50}
                 else:
                     return None, {}
                 
