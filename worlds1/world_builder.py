@@ -22,11 +22,7 @@ from loggers.action_logger import action_logger
 from datetime import datetime
 from loggers.message_logger import message_logger
 
-tick_duration = 0.1
 random_seed = 1
-verbose = False
-#key_action_map = {
-#    }
 key_action_map = {
         'ArrowUp': MoveNorth.__name__,
         'ArrowRight': MoveEast.__name__,
@@ -40,77 +36,53 @@ key_action_map = {
         'e': RemoveObject.__name__,
     }
 
-# Some settings
-nr_rooms = 9
-room_colors = ['#0008ff', '#ff1500', '#0dff00']
-wall_color = "#8a8a8a"
-drop_off_color = "#1F262A"
-block_size = 0.9
-nr_teams = 1
-agents_per_team = 2
-human_agents_per_team = 1
-agent_sense_range = np.inf  # the range with which agents detect other agents
-block_sense_range = 1  # the range with which agents detect blocks
-other_sense_range = np.inf  # the range with which agents detect other objects (walls, doors, etc.)
-agent_memory_decay = 5  # we want to memorize states for seconds / tick_duration ticks
-fov_occlusion = True
-
 def add_drop_off_zones(builder, exp_version):
     if exp_version == "experiment":
-        nr_drop_zones = 1
-        for nr_zone in range(nr_drop_zones):
-            builder.add_area((25,9), width=1, height=8, name=f"Drop off {nr_zone}", visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=nr_zone,
+        builder.add_area((25,9), width=1, height=8, name="Drop off 1", visualize_opacity=0.5, visualize_colour="#1F262A", drop_zone_nr=1,
                 is_drop_zone=True, is_goal_block=False, is_collectable=False) 
     if exp_version == "trial":
-        nr_drop_zones = 1
-        for nr_zone in range(nr_drop_zones):
-            builder.add_area((17,7), width=1, height=4, name=f"Drop off {nr_zone}",visualize_opacity=0.5, visualize_colour=drop_off_color, drop_zone_nr=nr_zone,
+        builder.add_area((17,7), width=1, height=4, name="Drop off 1", visualize_opacity=0.5, visualize_colour="#1F262A", drop_zone_nr=1,
                 is_drop_zone=True, is_goal_block=False, is_collectable=False) 
             
 def add_agents(builder, condition, exp_version):
-    sense_capability = SenseCapability({AgentBody: agent_sense_range,
-                                        CollectableBlock: block_sense_range,
-                                        None: other_sense_range,
-                                        ObstacleObject: 2,
+    sense_capability = SenseCapability({AgentBody: np.inf,
+                                        CollectableBlock: 1,
+                                        None: np.inf,
+                                        IronObject: 2,
+                                        FireObject: 2,
                                         SmokeObject: np.inf})
 
-    for team in range(nr_teams):
-        team_name = f"Team {team}"
-        # Add agents
-        nr_agents = agents_per_team - human_agents_per_team
-        for agent_nr in range(nr_agents):
-            #if exp_version=="experiment" and condition=="baseline":
-            #    brain = BaselineAgent(slowdown=8)
-            if exp_version=="experiment" and condition=="baseline":
-                brain = brutus()
-                brain2 = firefighter()
-                brain3 = firefighter()
-                brain4 = firefighter()
+    team_name = "Team 1"
+    
+    if exp_version=="experiment" and condition=="baseline":
+        brain = brutus()
+        brain2 = firefighter()
+        brain3 = firefighter()
+        brain4 = firefighter()
 
-            if exp_version=="experiment":
-                loc = (24,12)
-            else:
-                loc = (16,8)
-            builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                              sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
-            builder.add_agent((24,14), brain2, team=team_name, name="fire fighter 1",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-            builder.add_agent((0,13), brain3, team=team_name, name="fire fighter 3",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-            builder.add_agent((0,11), brain4, team=team_name, name="fire fighter 2",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                              sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    if exp_version=="experiment":
+        loc = (24,12)
+    else:
+        loc = (16,8)
 
+    builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                        sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
+    builder.add_agent((24,14), brain2, team=team_name, name="fire fighter 1",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    builder.add_agent((0,13), brain3, team=team_name, name="fire fighter 3",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    builder.add_agent((0,11), brain4, team=team_name, name="fire fighter 2",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
+                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
 
-        # Add human agents
-        for human_agent_nr in range(human_agents_per_team):
-            brain = custom_human_brain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=fov_occlusion)
-            if exp_version=="experiment":
-                loc = (24,13)
-            else:
-                loc = (16,9)
-            builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=1,#change opacity to 0
-                                    #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
-                                    key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
+    # Add human agents
+    brain = custom_human_brain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=True)
+    if exp_version=="experiment":
+        loc = (24,13)
+    else:
+        loc = (16,9)
+    builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=1,#change opacity to 0
+                            #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
+                            key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
 
 def create_builder(exp_version, condition, task):
     # Set numpy's random generator
@@ -123,11 +95,11 @@ def create_builder(exp_version, condition, task):
         goal = CollectionGoal(max_nr_ticks=10000000000)
     # Create our world builder
     if exp_version=="experiment":
-        builder = WorldBuilder(shape=[26,25], tick_duration=tick_duration, run_matrx_api=True,
-                           run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal, visualization_bg_clr='#e5ddd5')
+        builder = WorldBuilder(shape=[26,25], tick_duration = 0.1, run_matrx_api=True,
+                           run_matrx_visualizer=False, verbose = False, simulation_goal=goal, visualization_bg_clr='#e5ddd5')
     else:
-        builder = WorldBuilder(shape=[19,19], tick_duration=tick_duration, run_matrx_api=True,random_seed=random_seed,
-                           run_matrx_visualizer=False, verbose=verbose, simulation_goal=goal, visualization_bg_clr='#9a9083')
+        builder = WorldBuilder(shape=[19,19], tick_duration = 0.1, run_matrx_api=True,random_seed=random_seed,
+                           run_matrx_visualizer=False, verbose = False, simulation_goal=goal, visualization_bg_clr='#9a9083')
     if exp_version=="experiment":
         current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
         logger_save_folder = os.path.join("experiment_logs", current_exp_folder)
@@ -138,20 +110,20 @@ def create_builder(exp_version, condition, task):
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#1F262A")
         # Create the rooms
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour='#e5ddd5')
-        builder.add_room(top_left_location=(0,0), width=5, height=4, name='area 1', door_locations=[(2,3)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0, door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,4)})
-        builder.add_room(top_left_location=(7,0), width=5, height=4, name='area 2', door_locations=[(9,3)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,4)})
-        builder.add_room(top_left_location=(14,0), width=5, height=4, name='area 3', door_locations=[(16,3)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,4)})
-        builder.add_room(top_left_location=(21,0), width=5, height=4, name='area 4', door_locations=[(23,3)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,4)})
-        builder.add_room(top_left_location=(0,7), width=5, height=4, name='area 5', door_locations=[(2,7)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,6)})
-        builder.add_room(top_left_location=(7,7), width=5, height=4, name='area 6', door_locations=[(9,7)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,6)})
-        builder.add_room(top_left_location=(14,7), width=5, height=4, name='area 7', door_locations=[(16,7)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,6)})
-        builder.add_room(top_left_location=(0,14), width=5, height=4, name='area 8', door_locations=[(2,17)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,18)})
-        builder.add_room(top_left_location=(7,14), width=5, height=4, name='area 9', door_locations=[(9,17)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,18)})
-        builder.add_room(top_left_location=(14,14), width=5, height=4, name='area 10', door_locations=[(16,17)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,18)})
-        builder.add_room(top_left_location=(0,21), width=5, height=4, name='area 11', door_locations=[(2,21)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,20)})
-        builder.add_room(top_left_location=(7,21), width=5, height=4, name='area 12', door_locations=[(9,21)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,20)})
-        builder.add_room(top_left_location=(14,21), width=5, height=4, name='area 13', door_locations=[(16,21)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,20)})
-        builder.add_room(top_left_location=(21,21), width=5, height=4, name='area 14', door_locations=[(23,21)],doors_open=True, wall_visualize_colour=wall_color, with_area_tiles=True, area_visualize_colour=room_colors[0],area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,20)})
+        builder.add_room(top_left_location=(0,0), width=5, height=4, name='area 1', door_locations=[(2,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0, door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,4)})
+        builder.add_room(top_left_location=(7,0), width=5, height=4, name='area 2', door_locations=[(9,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,4)})
+        builder.add_room(top_left_location=(14,0), width=5, height=4, name='area 3', door_locations=[(16,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,4)})
+        builder.add_room(top_left_location=(21,0), width=5, height=4, name='area 4', door_locations=[(23,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,4)})
+        builder.add_room(top_left_location=(0,7), width=5, height=4, name='area 5', door_locations=[(2,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,6)})
+        builder.add_room(top_left_location=(7,7), width=5, height=4, name='area 6', door_locations=[(9,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,6)})
+        builder.add_room(top_left_location=(14,7), width=5, height=4, name='area 7', door_locations=[(16,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,6)})
+        builder.add_room(top_left_location=(0,14), width=5, height=4, name='area 8', door_locations=[(2,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,18)})
+        builder.add_room(top_left_location=(7,14), width=5, height=4, name='area 9', door_locations=[(9,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,18)})
+        builder.add_room(top_left_location=(14,14), width=5, height=4, name='area 10', door_locations=[(16,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,18)})
+        builder.add_room(top_left_location=(0,21), width=5, height=4, name='area 11', door_locations=[(2,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,20)})
+        builder.add_room(top_left_location=(7,21), width=5, height=4, name='area 12', door_locations=[(9,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,20)})
+        builder.add_room(top_left_location=(14,21), width=5, height=4, name='area 13', door_locations=[(16,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,20)})
+        builder.add_room(top_left_location=(21,21), width=5, height=4, name='area 14', door_locations=[(23,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,20)})
 
 
         for loc in [(25,3),(25,2),(25,1),(25,0), (25,21),(25,22),(25,23)]:
@@ -179,35 +151,28 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        builder.add_object((2,8), 'source',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+        builder.add_object((2,8), 'source',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='normal', is_traversable=True, is_movable=True)
+        builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25)
         for i in [(2,6),(1,6),(0,6),(3,6),(3,5),(3,4),(2,5),(2,4),(1,5),(1,4),(0,5),(0,4),(4,6),(4,5),(4,4)]:
-            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75)
 
-        builder.add_object((16,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object(location=(16,21),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
+        builder.add_object((16,22), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='normal', is_traversable=True, is_movable=True)
+        builder.add_object(location=(16,21),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25)
         for i in [(16,19),(15,19),(14,19),(17,19),(17,18),(17,20),(16,18),(16,20),(15,18),(15,20),(14,18),(14,20),(18,19),(18,18),(18,20)]:
-            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))        
+            builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75)        
 
-        builder.add_object((16,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object((9,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, percentage_lel=7.5, weight=False, is_traversable=True, is_movable=True) 
-        builder.add_object((2,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((9,1), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object(location=(10,1),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((23,3),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
-        builder.add_object((9,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
-        builder.add_object((16,7),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((2,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((9,21),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((9,22), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object(location=(10,22),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-        builder.add_object((9,17),'iron',ObstacleObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, percentage_lel=False, weight=125, is_traversable=False, is_movable=True)
-        builder.add_object((16,15), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, percentage_lel=5, weight=False, is_traversable=True, is_movable=True)
-        builder.add_object(location=(17,15),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1, co_ppm=np.random.randint(0,750), hcn_ppm=np.random.randint(0,60))
-    
-        #builder.add_object((2,8), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.75, percentage_lel=15, weight=False)
-        #builder.add_object((1,9), 'fire',ObstacleObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=1.25, percentage_lel=8, weight=False)
-        
+        builder.add_object((16,1), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='normal', is_traversable=True, is_movable=True)
+        builder.add_object((9,15), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='normal', is_traversable=True, is_movable=True) 
+        builder.add_object((2,3),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,1), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='normal', is_traversable=True, is_movable=True)
+        builder.add_object((23,3),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((9,7),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((16,7),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((2,21),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,21),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
+        builder.add_object((9,22), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='normal', is_traversable=True, is_movable=True)
+        builder.add_object((9,17),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
+        builder.add_object((16,15), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='normal', is_traversable=True, is_movable=True)          
 
         builder.add_object((24,2),'critically injured woman in area 4', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured woman.svg")
         builder.add_object((8,1),'mildly injured elderly man in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly man.svg")
@@ -252,19 +217,26 @@ class CollectableBlock(EnvObject):
     def __init__(self, location, name, visualize_shape, img_name):
         super().__init__(location, name, is_traversable=True, is_movable=True,
                          visualize_shape=visualize_shape,img_name=img_name,
-                         visualize_size=block_size, class_callable=CollectableBlock,
+                         visualize_size=0.9, class_callable=CollectableBlock,
                          is_drop_zone=False, is_goal_block=False, is_collectable=True)
 
-class ObstacleObject(EnvObject):
-    def __init__(self, location, name, percentage_lel, weight, visualize_shape, img_name, visualize_size, is_traversable, is_movable):
-        super().__init__(location, name, percentage_lel=percentage_lel, weight=weight, is_traversable=is_traversable, is_movable=is_movable,
+class FireObject(EnvObject):
+    def __init__(self, location, name, smoke, visualize_shape, img_name, visualize_size, is_traversable, is_movable):
+        super().__init__(location, name, smoke=smoke, is_traversable=is_traversable, is_movable=is_movable,
                          visualize_shape=visualize_shape,img_name=img_name,
-                         visualize_size=visualize_size, class_callable=ObstacleObject,
+                         visualize_size=visualize_size, class_callable=FireObject,
+                         is_drop_zone=False, is_goal_block=False, is_collectable=False)
+        
+class IronObject(EnvObject):
+    def __init__(self, location, name, weight, visualize_shape, img_name, visualize_size, is_traversable, is_movable):
+        super().__init__(location, name, weight=weight, is_traversable=is_traversable, is_movable=is_movable,
+                         visualize_shape=visualize_shape,img_name=img_name,
+                         visualize_size=visualize_size, class_callable=IronObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
 class SmokeObject(EnvObject):
-    def __init__(self, location, name, co_ppm, hcn_ppm, visualize_shape, img_name, visualize_size):
-        super().__init__(location, name, co_ppm=co_ppm, hcn_ppm=hcn_ppm, is_traversable=True, is_movable=False,
+    def __init__(self, location, name, visualize_shape, img_name, visualize_size):
+        super().__init__(location, name, is_traversable=True, is_movable=False,
                          visualize_shape=visualize_shape,img_name=img_name,
                          visualize_size=visualize_size, class_callable=SmokeObject,
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)
@@ -273,7 +245,7 @@ class GhostBlock(EnvObject):
     def __init__(self, location, drop_zone_nr, name, visualize_shape, img_name):
         super().__init__(location, name, is_traversable=True, is_movable=False,
                          visualize_shape=visualize_shape, img_name=img_name,
-                         visualize_size=block_size, class_callable=GhostBlock,
+                         visualize_size=0.9, class_callable=GhostBlock,
                          visualize_depth=110, drop_zone_nr=drop_zone_nr, visualize_opacity=0.5,
                          is_drop_zone=False, is_goal_block=True, is_collectable=False)
 

@@ -63,7 +63,7 @@ class brutus(custom_agent_brain):
         self._time = 0
         self._resistance = 90
         self._duration = 15
-        self._smoke = 'normal'
+        self._smoke = '?'
         self._temperature = '<≈'
         self._temperature_cat = 'close'
         self._location = '?'
@@ -98,11 +98,13 @@ class brutus(custom_agent_brain):
         self._send_message('Our score is ' + str(state['brutus']['score']) +'.', 'Brutus')
 
         for info in state.values():
-            if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'source' in info['obj_id']:
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
                 self._send_message('Found fire source!', 'Brutus')
                 self._location = '✔'
-            if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                self._smoke = info['smoke']
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
                 self._send_message('Found fire!', 'Brutus')
+                self._smoke = info['smoke']
                 if self._tactic == 'defensive':
                      self._send_message('Extinguishing fire...', 'Brutus')
                      return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 50}
@@ -320,7 +322,7 @@ class brutus(custom_agent_brain):
             if Phase.REMOVE_OBSTACLE_IF_NEEDED == self._phase:
                 objects = []
                 for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'iron' in info['obj_id'] and info not in objects:
+                    if 'class_inheritance' in info and 'IronObject' in info['class_inheritance'] and 'iron' in info['obj_id'] and info not in objects:
                         objects.append(info)
                         self._send_message('Iron debris is blocking ' + str(self._door['room_name']) + '. Removing iron debris...', 'Brutus')
                         return RemoveObject.__name__, {'object_id': info['obj_id'],'size':info['visualization']['size']}
@@ -336,7 +338,7 @@ class brutus(custom_agent_brain):
 
             if Phase.BACKUP == self._phase:
                 for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                    if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
                         if info['percentage_lel'] > 10 or self._co > 500 or self._hcn > 40:
                             self._send_message('fire at ' + str(self._door['room_name']) + ' too dangerous for fire fighter!! \n \n Going to abort extinguishing.','Brutus')
                             self._searched_rooms.append(self._door['room_name'])
