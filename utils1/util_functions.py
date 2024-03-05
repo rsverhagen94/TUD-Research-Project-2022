@@ -32,27 +32,47 @@ def R_to_Py_plot_priority(people, smoke, duration, location, image_name):
                 min <- 'min.'
                 loc <- NA
                 if ("{location}" == 'known') {{
-                    loc <- '✔'
+                    loc <- 'found'
                 }}
                 if ("{location}" == 'unknown') {{
                     loc <- '?'
                 }}
-                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
-                smoke = paste("<img src='/home/ruben/xai4mhc/Icons/smoke_speed_black.png' width='65' /><br>\n", new_data$smoke), 
-                location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='43' /><br>\n", loc), 
-                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data$people))
+                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='31' /><br>\n", new_data$duration, min), 
+                smoke = paste("<img src='/home/ruben/xai4mhc/Icons/smoke_speed_black.png' width='53' /><br>\n", new_data$smoke), 
+                location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='35' /><br>\n", loc), 
+                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='19' /><br>\n", new_data$people))
                 data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
-                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
-                plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
-                panel.background = element_blank(),
-                axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
-                axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
-                axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
-                legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
-                axis.ticks = element_line(color = "black"))
+                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) +
+                geom_bar(stat = "identity") +
+                scale_x_discrete(name = NULL, labels = labels) +
+                theme(axis.text.x = ggtext::element_markdown()) + # Removed color and size attributes here
+                theme(text = element_text(size = 12, family = "sans-serif"), # Changed size to 12, which is roughly 1rem
+                        plot.title = element_text(hjust = 0.5, size = 12, color = "black", face = "bold", margin = margin(b = 5)),
+                        plot.caption = element_text(size = 12, margin = margin(t = 25), color = "black"),
+                        panel.background = element_blank(),
+                        axis.text = element_text(size = 12, color = "black"),
+                        axis.text.y = element_text(color = "black", margin = margin(t = 5)),
+                        axis.line = element_line(color = "black"),
+                        axis.title = element_text(size = 12),
+                        axis.title.y = element_text(color = "black", margin = margin(r = 10), hjust = 0.5),
+                        axis.title.x = element_text(color = "black", margin = margin(t = 5), hjust = 0.5),
+                        panel.grid.major = element_line(color = "#DAE1E7"),
+                        panel.grid.major.x = element_blank()) +
+                theme(legend.background = element_rect(fill = "white", color = "white"),
+                        legend.key = element_rect(fill = "white", color = "white"),
+                        legend.text = element_text(size = 12),
+                        legend.position = "none",
+                        legend.title = element_text(size = 12, face = "plain")) +
+                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
+                labs(y = "Relative feature contribution", fill = "") +
+                scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
+                scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
+                geom_hline(yintercept = 0, color = "black") +
+                theme(axis.text = element_text(color = "black"),
+                        axis.ticks = element_line(color = "black"))
                 dpi_web <- 300
-                width_pixels <- 1600
-                height_pixels <- 1600
+                width_pixels <- 1500
+                height_pixels <- 1500
                 width_inches_web <- width_pixels / dpi_web
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
@@ -95,27 +115,47 @@ def R_to_Py_plot_tactic(people, location, duration, resistance, image_name):
                 min <- 'min.'
                 loc <- NA
                 if ("{location}" == 'known') {{
-                    loc <- '✔'
+                    loc <- 'found'
                 }}
                 if ("{location}" == 'unknown') {{
                     loc <- '?'
                 }}
-                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
-                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data$resistance, min), 
-                location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='43' /><br>\n", loc), 
-                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data$people))
+                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='31' /><br>\n", new_data$duration, min), 
+                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='38' /><br>\n", new_data$resistance, min), 
+                location = paste("<img src='/home/ruben/xai4mhc/Icons/location_fire_black.png' width='35' /><br>\n", loc), 
+                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='19' /><br>\n", new_data$people))
                 data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
-                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
-                plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
-                panel.background = element_blank(),
-                axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
-                axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
-                axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
-                legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
-                axis.ticks = element_line(color = "black"))
+                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) +
+                geom_bar(stat = "identity") +
+                scale_x_discrete(name = NULL, labels = labels) +
+                theme(axis.text.x = ggtext::element_markdown()) + # Removed color and size attributes here
+                theme(text = element_text(size = 12, family = "sans-serif"), # Changed size to 12, which is roughly 1rem
+                        plot.title = element_text(hjust = 0.5, size = 12, color = "black", face = "bold", margin = margin(b = 5)),
+                        plot.caption = element_text(size = 12, margin = margin(t = 25), color = "black"),
+                        panel.background = element_blank(),
+                        axis.text = element_text(size = 12, color = "black"),
+                        axis.text.y = element_text(color = "black", margin = margin(t = 5)),
+                        axis.line = element_line(color = "black"),
+                        axis.title = element_text(size = 12),
+                        axis.title.y = element_text(color = "black", margin = margin(r = 10), hjust = 0.5),
+                        axis.title.x = element_text(color = "black", margin = margin(t = 5), hjust = 0.5),
+                        panel.grid.major = element_line(color = "#DAE1E7"),
+                        panel.grid.major.x = element_blank()) +
+                theme(legend.background = element_rect(fill = "white", color = "white"),
+                        legend.key = element_rect(fill = "white", color = "white"),
+                        legend.text = element_text(size = 12),
+                        legend.position = "none",
+                        legend.title = element_text(size = 12, face = "plain")) +
+                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
+                labs(y = "Relative feature contribution", fill = "") +
+                scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
+                scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
+                geom_hline(yintercept = 0, color = "black") +
+                theme(axis.text = element_text(color = "black"),
+                        axis.ticks = element_line(color = "black"))
                 dpi_web <- 300
-                width_pixels <- 1600
-                height_pixels <- 1600
+                width_pixels <- 1500
+                height_pixels <- 1500
                 width_inches_web <- width_pixels / dpi_web
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
@@ -168,22 +208,42 @@ def R_to_Py_plot_locate(people, duration, resistance, temperature, image_name):
                 if ("{temperature}" == 'higher') {{
                     temp <- '&gt; thresh.'
                 }}
-                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
-                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data$resistance, min), 
-                temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", temp), 
-                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='24' /><br>\n", new_data$people))
+                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='32' /><br>\n", new_data$duration, min), 
+                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='38' /><br>\n", new_data$resistance, min), 
+                temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='43' /><br>\n", temp), 
+                people = paste("<img src='/home/ruben/xai4mhc/Icons/victims.png' width='19' /><br>\n", new_data$people))
                 data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
-                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
-                plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
-                panel.background = element_blank(),
-                axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
-                axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
-                axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
-                legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
-                axis.ticks = element_line(color = "black"))
+                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) +
+                geom_bar(stat = "identity") +
+                scale_x_discrete(name = NULL, labels = labels) +
+                theme(axis.text.x = ggtext::element_markdown()) + # Removed color and size attributes here
+                theme(text = element_text(size = 12, family = "sans-serif"), # Changed size to 12, which is roughly 1rem
+                        plot.title = element_text(hjust = 0.5, size = 12, color = "black", face = "bold", margin = margin(b = 5)),
+                        plot.caption = element_text(size = 12, margin = margin(t = 25), color = "black"),
+                        panel.background = element_blank(),
+                        axis.text = element_text(size = 12, color = "black"),
+                        axis.text.y = element_text(color = "black", margin = margin(t = 5)),
+                        axis.line = element_line(color = "black"),
+                        axis.title = element_text(size = 12),
+                        axis.title.y = element_text(color = "black", margin = margin(r = 10), hjust = 0.5),
+                        axis.title.x = element_text(color = "black", margin = margin(t = 5), hjust = 0.5),
+                        panel.grid.major = element_line(color = "#DAE1E7"),
+                        panel.grid.major.x = element_blank()) +
+                theme(legend.background = element_rect(fill = "white", color = "white"),
+                        legend.key = element_rect(fill = "white", color = "white"),
+                        legend.text = element_text(size = 12),
+                        legend.position = "none",
+                        legend.title = element_text(size = 12, face = "plain")) +
+                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
+                labs(y = "Relative feature contribution", fill = "") +
+                scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
+                scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
+                geom_hline(yintercept = 0, color = "black") +
+                theme(axis.text = element_text(color = "black"),
+                        axis.ticks = element_line(color = "black"))
                 dpi_web <- 300
-                width_pixels <- 1600
-                height_pixels <- 1600
+                width_pixels <- 1500
+                height_pixels <- 1500
                 width_inches_web <- width_pixels / dpi_web
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
@@ -236,22 +296,42 @@ def R_to_Py_plot_rescue(duration, resistance, temperature, distance, image_name)
                 if ("{temperature}" == 'higher') {{
                     temp <- '&gt; thresh.'
                 }}
-                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='38' /><br>\n", new_data$duration, min), 
-                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='47' /><br>\n", new_data$resistance, min), 
-                temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='53' /><br>\n", temp), 
-                distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='67' /><br>\n", new_data$distance))
+                labels <- c(duration = paste("<img src='/home/ruben/xai4mhc/Icons/duration_fire_black.png' width='31' /><br>\n", new_data$duration, min), 
+                resistance = paste("<img src='/home/ruben/xai4mhc/Icons/fire_resistance_black.png' width='38' /><br>\n", new_data$resistance, min), 
+                temperature = paste("<img src='/home/ruben/xai4mhc/Icons/celsius_transparent.png' width='43' /><br>\n", temp), 
+                distance = paste("<img src='/home/ruben/xai4mhc/Icons/distance_fire_victim_black.png' width='54' /><br>\n", new_data$distance))
                 data_plot$variable <- reorder(data_plot$variable, -abs(data_plot$phi))
-                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) + geom_bar(stat = "identity") + scale_x_discrete(name = NULL, labels = labels) + theme(axis.text.x = ggtext::element_markdown(color = "black", size = 15)) + theme(text=element_text(size = 15, family="Roboto"),plot.title=element_text(hjust=0.5,size=15,color="black",face="bold",margin = margin(b=5)),
-                plot.caption = element_text(size=15,margin = margin(t=25),color="black"),
-                panel.background = element_blank(),
-                axis.text = element_text(size=15,colour = "black"),axis.text.y = element_text(colour = "black",margin = margin(t=5)),
-                axis.line = element_line(colour = "black"), axis.title = element_text(size=15), axis.title.y = element_text(colour = "black",margin = margin(r=10),hjust = 0.5),
-                axis.title.x = element_text(colour = "black", margin = margin(t=5),hjust = 0.5), panel.grid.major = element_line(color="#DAE1E7"), panel.grid.major.x = element_blank()) + theme(legend.background = element_rect(fill="white",colour = "white"),legend.key = element_rect(fill="white",colour = "white"), legend.text = element_text(size=15),
-                legend.position ="none",legend.title = element_text(size=15,face = "plain")) + ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) + labs(y="Relative feature contribution", fill="") + scale_y_continuous(breaks=seq(-1,1,by=0.5), limits=c(-1,1), expand=c(0.0,0.0)) + scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive","negative")) + geom_hline(yintercept = 0, color = "black") + theme(axis.text = element_text(color = "black"),
-                axis.ticks = element_line(color = "black"))
+                pl <- ggplot(data_plot, aes(x = variable, y = phi, fill = ifelse(phi >= 0, "positive", "negative"))) +
+                geom_bar(stat = "identity") +
+                scale_x_discrete(name = NULL, labels = labels) +
+                theme(axis.text.x = ggtext::element_markdown()) + # Removed color and size attributes here
+                theme(text = element_text(size = 12, family = "sans-serif"), # Changed size to 12, which is roughly 1rem
+                        plot.title = element_text(hjust = 0.5, size = 12, color = "black", face = "bold", margin = margin(b = 5)),
+                        plot.caption = element_text(size = 12, margin = margin(t = 25), color = "black"),
+                        panel.background = element_blank(),
+                        axis.text = element_text(size = 12, color = "black"),
+                        axis.text.y = element_text(color = "black", margin = margin(t = 5)),
+                        axis.line = element_line(color = "black"),
+                        axis.title = element_text(size = 12),
+                        axis.title.y = element_text(color = "black", margin = margin(r = 10), hjust = 0.5),
+                        axis.title.x = element_text(color = "black", margin = margin(t = 5), hjust = 0.5),
+                        panel.grid.major = element_line(color = "#DAE1E7"),
+                        panel.grid.major.x = element_blank()) +
+                theme(legend.background = element_rect(fill = "white", color = "white"),
+                        legend.key = element_rect(fill = "white", color = "white"),
+                        legend.text = element_text(size = 12),
+                        legend.position = "none",
+                        legend.title = element_text(size = 12, face = "plain")) +
+                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
+                labs(y = "Relative feature contribution", fill = "") +
+                scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
+                scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
+                geom_hline(yintercept = 0, color = "black") +
+                theme(axis.text = element_text(color = "black"),
+                        axis.ticks = element_line(color = "black"))
                 dpi_web <- 300
-                width_pixels <- 1600
-                height_pixels <- 1600
+                width_pixels <- 1500
+                height_pixels <- 1500
                 width_inches_web <- width_pixels / dpi_web
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)

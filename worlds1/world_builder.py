@@ -80,9 +80,9 @@ def add_agents(builder, condition, exp_version):
         loc = (24,13)
     else:
         loc = (16,9)
-    builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=1,#change opacity to 0
-                            #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
-                            key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
+    builder.add_human_agent(loc, brain, team=team_name, name="Human", visualize_opacity=0,#change opacity to 0
+                            key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
+                            #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
 
 def create_builder(exp_version, condition, task):
     # Set numpy's random generator
@@ -90,7 +90,7 @@ def create_builder(exp_version, condition, task):
 
     # Create the goal
     if exp_version == "experiment":
-        goal = CollectionGoal(max_nr_ticks=1800)
+        goal = CollectionGoal(max_nr_ticks=600)
     if exp_version == "trial":
         goal = CollectionGoal(max_nr_ticks=10000000000)
     # Create our world builder

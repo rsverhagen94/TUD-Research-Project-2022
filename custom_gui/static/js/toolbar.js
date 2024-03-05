@@ -453,70 +453,70 @@ function add_message(chatroom_ID, mssg) {
     mssg_content = mssg_content.replaceAll("['",""); 
     mssg_content = mssg_content.replaceAll("']",""); 
     mssg_content = mssg_content.replaceAll("\n","<br>");
-    mssg_content = mssg_content.replaceAll("toxic", "<img src='/static/images/toxic.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Iron debris", "<img src='/static/images/girder.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("iron debris", "<img src='/static/images/girder.svg' height= 40 width=40/>");
-    //mssg_content = mssg_content.replaceAll("fire fighter", "<img src='/static/images/rescue-man-final3.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("explosion", "<img src='/static/images/explosion-danger.svg' height= 40 width=40/>");
-    //mssg_content = mssg_content.replaceAll("fire", "<img src='/static/images/fire2.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Pinned", "<img src='/static/images/location-pin.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("by myself", "<img src='/static/images/robot-final4.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("toxic", "<img src='/static/images/toxic.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Iron debris", "<img src='/static/images/girder.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("iron debris", "<img src='/static/images/girder.svg' height= 30 width=30/>");
+    //mssg_content = mssg_content.replaceAll("fire fighter", "<img src='/static/images/rescue-man-final3.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("explosion", "<img src='/static/images/explosion-danger.svg' height= 30 width=30/>");
+    //mssg_content = mssg_content.replaceAll("fire", "<img src='/static/images/fire2.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Pinned", "<img src='/static/images/location-pin.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("by myself", "<img src='/static/images/robot-final4.svg' height= 30 width=30/>");
     mssg_content = mssg_content.replaceAll("with help", "<img src='/static/images/robot-man-extinguish.svg' height= 55 width=55/>");
-    mssg_content = mssg_content.replaceAll("healthy girl", "<img src='/static/images/healthy%20girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy boy", "<img src='/static/images/healthy%20boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy man", "<img src='/static/images/healthy%20man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy woman", "<img src='/static/images/healthy%20woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy dog", "<img src='/static/images/healthy%20dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy cat", "<img src='/static/images/healthy%20cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy elderly man", "<img src='/static/images/healthy%20elderly%20man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy elderly woman", "<img src='/static/images/healthy%20elderly%20woman.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("healthy girl", "<img src='/static/images/healthy%20girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy boy", "<img src='/static/images/healthy%20boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy man", "<img src='/static/images/healthy%20man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy woman", "<img src='/static/images/healthy%20woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy dog", "<img src='/static/images/healthy%20dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy cat", "<img src='/static/images/healthy%20cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy elderly man", "<img src='/static/images/healthy%20elderly%20man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy elderly woman", "<img src='/static/images/healthy%20elderly%20woman.svg' height= 30 width=30/>");
     
-    mssg_content = mssg_content.replaceAll("critically injured girl", "<img src='/static/images/critically injured girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured boy", "<img src='/static/images/critically injured boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured man", "<img src='/static/images/critically injured man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured woman", "<img src='/static/images/critically injured woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured dog", "<img src='/static/images/critically injured dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured cat", "<img src='/static/images/critically injured cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured elderly man", "<img src='/static/images/critically injured elderly man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("critically injured elderly woman", "<img src='/static/images/critically injured elderly woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured girl", "<img src='/static/images/mildly injured girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured boy", "<img src='/static/images/mildly injured boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured man", "<img src='/static/images/mildly injured man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured woman", "<img src='/static/images/mildly injured woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured dog", "<img src='/static/images/mildly injured dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured cat", "<img src='/static/images/mildly injured cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured elderly man", "<img src='/static/images/mildly injured elderly man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("mildly injured elderly woman", "<img src='/static/images/mildly injured elderly woman.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("critically injured girl", "<img src='/static/images/critically injured girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured boy", "<img src='/static/images/critically injured boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured man", "<img src='/static/images/critically injured man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured woman", "<img src='/static/images/critically injured woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured dog", "<img src='/static/images/critically injured dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured cat", "<img src='/static/images/critically injured cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured elderly man", "<img src='/static/images/critically injured elderly man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("critically injured elderly woman", "<img src='/static/images/critically injured elderly woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured girl", "<img src='/static/images/mildly injured girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured boy", "<img src='/static/images/mildly injured boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured man", "<img src='/static/images/mildly injured man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured woman", "<img src='/static/images/mildly injured woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured dog", "<img src='/static/images/mildly injured dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured cat", "<img src='/static/images/mildly injured cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured elderly man", "<img src='/static/images/mildly injured elderly man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("mildly injured elderly woman", "<img src='/static/images/mildly injured elderly woman.svg' height= 30 width=30/>");
 
-    mssg_content = mssg_content.replaceAll("Critically injured girl", "<img src='/static/images/critically injured girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured boy", "<img src='/static/images/critically injured boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured man", "<img src='/static/images/critically injured man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured woman", "<img src='/static/images/critically injured woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured dog", "<img src='/static/images/critically injured dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured cat", "<img src='/static/images/critically injured cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured elderly man", "<img src='/static/images/critically injured elderly man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Critically injured elderly woman", "<img src='/static/images/critically injured elderly woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured girl", "<img src='/static/images/mildly injured girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured boy", "<img src='/static/images/mildly injured boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured man", "<img src='/static/images/mildly injured man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured woman", "<img src='/static/images/mildly injured woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured dog", "<img src='/static/images/mildly injured dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured cat", "<img src='/static/images/mildly injured cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured elderly man", "<img src='/static/images/mildly injured elderly man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("Mildly injured elderly woman", "<img src='/static/images/mildly injured elderly woman.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("Critically injured girl", "<img src='/static/images/critically injured girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured boy", "<img src='/static/images/critically injured boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured man", "<img src='/static/images/critically injured man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured woman", "<img src='/static/images/critically injured woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured dog", "<img src='/static/images/critically injured dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured cat", "<img src='/static/images/critically injured cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured elderly man", "<img src='/static/images/critically injured elderly man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Critically injured elderly woman", "<img src='/static/images/critically injured elderly woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured girl", "<img src='/static/images/mildly injured girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured boy", "<img src='/static/images/mildly injured boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured man", "<img src='/static/images/mildly injured man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured woman", "<img src='/static/images/mildly injured woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured dog", "<img src='/static/images/mildly injured dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured cat", "<img src='/static/images/mildly injured cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured elderly man", "<img src='/static/images/mildly injured elderly man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("Mildly injured elderly woman", "<img src='/static/images/mildly injured elderly woman.svg' height= 30 width=30/>");
 
-    mssg_content = mssg_content.replaceAll("healthy girl", "<img src='/static/images/healthy girl.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy boy", "<img src='/static/images/healthy boy.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy man", "<img src='/static/images/healthy man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy woman", "<img src='/static/images/healthy woman.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy dog", "<img src='/static/images/healthy dog.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy cat", "<img src='/static/images/healthy cat.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy elderly man", "<img src='/static/images/healthy elderly man.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("healthy elderly woman", "<img src='/static/images/healthy elderly woman.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("healthy girl", "<img src='/static/images/healthy girl.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy boy", "<img src='/static/images/healthy boy.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy man", "<img src='/static/images/healthy man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy woman", "<img src='/static/images/healthy woman.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy dog", "<img src='/static/images/healthy dog.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy cat", "<img src='/static/images/healthy cat.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy elderly man", "<img src='/static/images/healthy elderly man.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("healthy elderly woman", "<img src='/static/images/healthy elderly woman.svg' height= 30 width=30/>");
 
-    mssg_content = mssg_content.replaceAll("rock", "<img src='/static/images/stone.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("stones", "<img src='/static/images/stone-small.svg' height= 40 width=40/>");
-    mssg_content = mssg_content.replaceAll("tree", "<img src='/static/images/tree-fallen2.svg' height= 40 width=40/>");
+    mssg_content = mssg_content.replaceAll("rock", "<img src='/static/images/stone.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("stones", "<img src='/static/images/stone-small.svg' height= 30 width=30/>");
+    mssg_content = mssg_content.replaceAll("tree", "<img src='/static/images/tree-fallen2.svg' height= 30 width=30/>");
 
     // mssg_content = mssg_content.replaceAll("plot", "<img src='/static/images/sensitivity_plot.svg' />");
 
@@ -524,15 +524,15 @@ function add_message(chatroom_ID, mssg) {
     
 
     if (mssg_content.includes("Time left:")) {
-        function clock() {
+        function resistance() {
             const text = mssg_content.split(".").join("").split(" ").at(-1);
             const newTime = 'Time left: ' + text + ' minutes';
-            document.getElementById('clock').innerHTML = newTime;
+            document.getElementById('resistance').innerHTML = newTime;
     
             // Assuming you have an <h6> element with id="fireResistance"
-            document.getElementById('fireResistance').innerHTML = `<img src='/static/images/fire_resistance_transparent.svg' width=50/> ${text} min.`;
+            document.getElementById('resistance').innerHTML = `<img src='/static/images/fire_resistance_transparent.svg' width=50/> ${text} minutes`;
         }
-        clock();
+        resistance();
     }
 
     if (mssg_content.includes("Fire duration:")) {
@@ -542,7 +542,7 @@ function add_message(chatroom_ID, mssg) {
             document.getElementById('duration').innerHTML = newTime;
     
             // Assuming you have an <h6> element with id="fireResistance"
-            document.getElementById('duration').innerHTML = `<img src='/static/images/duration_transparent.svg' width=40/> ${text} min.`;
+            document.getElementById('duration').innerHTML = `<img src='/static/images/duration_transparent.svg' width=40/> ${text} minutes`;
         }
         duration();
     }
@@ -578,7 +578,7 @@ function add_message(chatroom_ID, mssg) {
             document.getElementById('temperature').innerHTML = newTemp;
     
             // Assuming you have an <h6> element with id="fireResistance"
-            document.getElementById('temperature').innerHTML = `<img src='/static/images/celsius_transparent.svg' width=56/> ${text} thresh.`;
+            document.getElementById('temperature').innerHTML = `<img src='/static/images/celsius_transparent.svg' width=56/> ${text} threshold`;
         }
         temperature();
     }

@@ -135,7 +135,7 @@ html {
 
 #messages {
     overflow-y: scroll;
-    max-height: 75vh;
+    max-height: 71vh;
     margin-bottom: 5px;
 }
 
@@ -211,9 +211,9 @@ html {
   margin-bottom: 0.5em;
 }
 
-h5 {
-  margin-top: 0.0em;
-  margin-bottom: 0.0em;
+h6 {
+  margin-top: -0.5em;
+  margin-bottom: -0.5em;
 }
 
 #chat {

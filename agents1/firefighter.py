@@ -104,7 +104,7 @@ class firefighter(custom_agent_brain):
                     for info in state.values():
                         if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
                             self._send_message('Found fire source!', agent_name.replace('_', ' ').capitalize())
-                            self._location = '✔'
+                            self._location = 'found'
                     return action, {}
                 self._phase = Phase.PLAN_EXIT
 
