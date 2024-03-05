@@ -27,7 +27,7 @@ if __name__ == "__main__":
     media_folder = pathlib.Path().resolve()
     print("Starting custom visualizer")
     vis_thread = visualization_server.run_matrx_visualizer(verbose=False, media_folder=media_folder)
-    for level in range(1,7):
+    for level in range(1):
         builder = create_builder(exp_version='experiment', condition='baseline', task=level)
         builder.startup(media_folder=media_folder)
         print("Started world...")

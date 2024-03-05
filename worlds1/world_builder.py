@@ -90,7 +90,7 @@ def create_builder(exp_version, condition, task):
 
     # Create the goal
     if exp_version == "experiment":
-        goal = CollectionGoal(max_nr_ticks=5400)
+        goal = CollectionGoal(max_nr_ticks=1800)
     if exp_version == "trial":
         goal = CollectionGoal(max_nr_ticks=10000000000)
     # Create our world builder

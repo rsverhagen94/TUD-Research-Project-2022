@@ -37,7 +37,8 @@ class Phase(enum.Enum):
     DROP_VICTIM=15,
     TACTIC=18,
     PRIORITY=20,
-    RESCUE=21
+    RESCUE=21,
+    EXTINGUISH_CHECK=22
 
     
 class brutus(custom_agent_brain):
@@ -55,6 +56,7 @@ class brutus(custom_agent_brain):
         self._fire_locations = []
         self._area_tiles = []
         self._situations = []
+        self._plot_times = []
         self._situation = None
         self._victim_locations = {}
         self._current_door = None
@@ -66,43 +68,58 @@ class brutus(custom_agent_brain):
         self._current_location = None
         self._plot_generated = False
         self._time_left = 90
-        self._time = 0
         self._smoke = '?'
         self._temperature = '<≈'
         self._temperature_cat = 'close'
         self._location = '?'
         self._distance = '?'
-        self._tactic = 'offensive'
+        self._tactic = 'defensive'
+        self._resistance = 90
+        self._duration = 15
+        self._offensive_deployment_time = 0
+        self._defensive_deployment_time = 0
 
-    def update_time(self):
-        with self._counter_lock:
-            self._resistance -= 1
-            self._duration += 1
-            if self._resistance < 0:
-                self._resistance = 90  # Reset the counter after reaching 0
-                self._duration = 0
+    #def update_time(self):
+        #with self._counter_lock:
+        #    self._resistance -= 1
+        #    self._duration += 1
+        #    if self._resistance < 0:
+        #        self._resistance = 90  # Reset the counter after reaching 0
+        #        self._duration = 0
+        #    if self._tactic == 'offensive':
+        #        self._offensive_deployment_time += 1
+        #    if self._tactic == 'defensive':
+        #        self._defensive_deployment_time += 1
 
-        self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
-        self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
+        #self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
+        #self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
         # Schedule the next print
-        threading.Timer(6, self.update_time).start()
+        #threading.Timer(6, self.update_time).start()
 
     def initialize(self):
         self._state_tracker = StateTracker(agent_id=self.agent_id)
         self._navigator = Navigator(agent_id=self.agent_id, 
             action_set=self.action_set, algorithm=Navigator.A_STAR_ALGORITHM)  
         load_R_to_Py()
-        self._counter_lock = threading.Lock()
-        self._resistance = 91
-        self._duration = 14
-        # Start the initial print
-        self.update_time()
+        #self._counter_lock = threading.Lock()
+        #self.update_time()
 
     def filter_bw4t_observations(self, state):
+        self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
+        if int(self._second) % 6 == 0 and int(self._second) not in self._modulos:
+            self._modulos.append(int(self._second))
+            self._resistance -= 1
+            self._duration += 1
+            if self._tactic == 'offensive':
+                self._offensive_deployment_time += 1
+            if self._tactic == 'defensive':
+                self._defensive_deployment_time += 1
+        self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
+        self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
         return state
 
     def decide_on_bw4t_action(self, state:State):
-        print(self._phase)
+        #print(self._phase)
         self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
         self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
         self._send_message('Location: ' + self._location + '.', 'RescueBot')
@@ -118,13 +135,12 @@ class brutus(custom_agent_brain):
                 self._send_message('Found fire source!', 'Brutus')
                 self._location = '✔'
                 self._smoke = info['smoke']
-            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and info['location'] not in self._fire_locations:
+                self._phase = Phase.EXTINGUISH_CHECK
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and info['location'] not in self._fire_locations or \
+                'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id'] and info['location'] not in self._fire_locations:
                 self._send_message('Found fire in ' + self._current_room + '.', 'Brutus')
-                self._fire_locations.append(info['location'])
                 self._smoke = info['smoke']
-                if self._tactic == 'defensive':
-                     self._send_message('Extinguishing fire in ' + self._current_room + '...', 'Brutus')
-                     return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 50}
+                self._phase = Phase.EXTINGUISH_CHECK
 
         if self._location == '✔':
             for info in state.values():
@@ -133,6 +149,7 @@ class brutus(custom_agent_brain):
 
         if self.received_messages_content and self.received_messages_content[-1] == 'Found fire source!':
             self._send_message('Fire source located and pinned on the map.', 'Brutus')
+            # replace with location determined by world builder
             action_kwargs = add_object([(2,8)], "/images/fire2.svg", 3, 1, 'fire source')
             self._location = '✔' 
             return AddObject.__name__, action_kwargs
@@ -142,10 +159,21 @@ class brutus(custom_agent_brain):
         if self._location == '✔':
             self._location_cat = 'known'
 
-        if self._time_left - self._resistance not in [self._time]: #replace by list keeping track of all times where plots are send
+        if self._time_left - self._resistance not in self._plot_times: #replace by list keeping track of all times where plots are send
             self._plot_generated = False
 
         while True:
+            if Phase.EXTINGUISH_CHECK == self._phase:
+                for info in state.values():
+                    if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and self._tactic == 'defensive' or \
+                        'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id'] and self._tactic == 'defensive':
+                        self._fire_locations.append(info['location'])
+                        self._send_message('Extinguishing fire in ' + self._current_room + '...', 'Brutus')
+                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 10}
+                    if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name'] and self._tactic == 'defensive':
+                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 0}
+                self._phase = Phase.FIND_NEXT_GOAL
+
             if Phase.INTRO == self._phase:
                 self._send_message('If you are ready to begin our mission, press the "Continue" button.', 'Brutus')
                 if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
@@ -174,53 +202,107 @@ class brutus(custom_agent_brain):
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
 
                 if sensitivity >= 4.2:
-                    self._send_message('My offensive inside deployment has been going on for ' + str(self._time_left - self._resistance) + ' minutes now. \
-                                    We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
-                                    Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
-                                    This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                    + image_name, 'Brutus')
+                    if self._tactic == 'offensive':
+                        self._send_message('My offensive inside deployment has been going on for ' + str(self._offensive_deployment_time) + ' minutes now. \
+                                            We should decide whether to continue with the current offensive inside deployment, or switch to a defensive inside deployment. \
+                                            Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                            This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                            + image_name, 'Brutus')
+                    if self._tactic == 'defensive':
+                        self._send_message('My defensive inside deployment has been going on for ' + str(self._defensive_deployment_time) + ' minutes now. \
+                                            We should decide whether to continue with the current defensive inside deployment, or switch to an offensive inside deployment. \
+                                            Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
+                                            This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                            + image_name, 'Brutus')
                     self._decide = 'human'
-                    self._time = self._time_left - self._resistance
+                    self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
                     self._phase = Phase.TACTIC
                 
                 if sensitivity < 4.2:
-                    self._send_message('My offensive inside deployment has been going on for ' + str(self._time_left - self._resistance) + ' minutes now. \
-                                    We should decide whether to continue with this tactic or switch to a defensive inside deployment. \
-                                    I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
-                                    This is how much each feature contributed to the predicted sensitivity: \n \n ' \
-                                    + image_name, 'Brutus')
+                    if self._tactic == 'offensive':
+                        self._send_message('My offensive inside deployment has been going on for ' + str(self._offensive_deployment_time) + ' minutes now. \
+                                            We should decide whether to continue with the current offensive inside deployment, or switch to a defensive inside deployment. \
+                                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
+                                            This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                            + image_name, 'Brutus')
+                    if self._tactic == 'defensive':
+                        self._send_message('My defensive inside deployment has been going on for ' + str(self._defensive_deployment_time) + ' minutes now. \
+                                            We should decide whether to continue with the current defensive inside deployment, or switch to an offensive inside deployment. \
+                                            I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
+                                            This is how much each feature contributed to the predicted sensitivity: \n \n ' \
+                                            + image_name, 'Brutus')
                     self._decide = 'Brutus'
-                    self._time = self._time_left - self._resistance
+                    self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
                     self._phase = Phase.TACTIC
+                    return Idle.__name__, {'duration_in_ticks':165}
 
             if Phase.TACTIC == self._phase:
-                if self._decide == 'human':
-                    self._send_message('If you want to continue with the offensive inside deployment going on for ' + str(self._time) + ' minutes now, press the "Continue" button. \
-                                    If you want to switch to a defensive inside deployment, press the "Switch" button.', 'Brutus')
+                if self._decide == 'human' and self._tactic == 'offensive':
+                    self._send_message('If you want to continue with the offensive inside deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, press the "Continue" button. \
+                                        If you want to switch to a defensive inside deployment, press the "Switch" button.', 'Brutus')
+                    self._plot_times.append(self._time_left - self._resistance)
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Continuing with the offensive inside deployment that has been going on for ' + str(self._time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Continuing with the offensive inside deployment that has been going on for ' + str(self._offensive_deployment_time) + ' minutes, because you decided to.', 'Brutus')
                         self._tactic = 'offensive'
+                        self._decide = None
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
-                        self._send_message('Switching to a defensive inside deployment after the offensive inside deployment of ' + str(self._time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Switching to a defensive inside deployment after the offensive inside deployment of ' + str(self._offensive_deployment_time) + ' minutes, because you decided to.', 'Brutus')
                         self._tactic = 'defensive'
+                        self._decide = None
+                        self._phase = self._last_phase
+                    else:
+                        return None, {}
+
+                if self._decide == 'human' and self._tactic == 'defensive':
+                    self._send_message('If you want to continue with the defensive inside deployment going on for ' + str(self._defensive_deployment_time) + ' minutes now, press the "Continue" button. \
+                                        If you want to switch to an offensive inside deployment, press the "Switch" button.', 'Brutus')
+                    self._plot_times.append(self._time_left - self._resistance)
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
+                        self._send_message('Continuing with the defensive inside deployment that has been going on for ' + str(self._defensive_deployment_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._tactic = 'defensive'
+                        self._decide = None
+                        self._phase = self._last_phase
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
+                        self._send_message('Switching to an offensive inside deployment after the defensive inside deployment of ' + str(self._defensive_deployment_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._tactic = 'offensive'
+                        self._decide = None
                         self._phase = self._last_phase
                     else:
                         return None, {}
 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SWITCHING TACTICS, FOR EXAMPLE WRT HOW DANGEROUS SITUATION IS (CHECK GUIDELINES)    
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                if self._decide == 'Brutus' and self._tactic == 'offensive':
                     if self._resistance > 15 and self._duration < 45:
-                        self._send_message('Continuing with the offensive inside deployment because the fire duration (' + str(self._duration) + ' minutes) is less than 45 minutes \
-                                            and the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes.', 'Brutus')
+                        self._send_message('Continuing with the offensive inside deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, because the fire duration is less than 45 minutes \
+                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                        self._plot_times.append(self._time_left - self._resistance)
                         self._tactic = 'offensive'
+                        self._decide = None
                         self._phase = self._last_phase
                     else:
-                        self._send_message('Switching to the defensive inside deployment after the offensive inside deployment of ' + str(self._time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                        self._send_message('Switching to a defensive inside deployment after the offensive inside deployment of ' + str(self._offensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                        self._plot_times.append(self._time_left - self._resistance)
                         self._tactic = 'defensive'
+                        self._decide = None
                         self._phase = self._last_phase
+
+                if self._decide == 'Brutus' and self._tactic == 'defensive':
+                    if self._resistance > 15 and self._duration < 45:
+                        self._send_message('Switching to an offensive inside deployment after the defensive inside deployment of ' + str(self._defensive_deployment_time) + ' minutes, because the fire duration is less than 45 minutes \
+                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                        self._plot_times.append(self._time_left - self._resistance)
+                        self._tactic = 'offensive'
+                        self._decide = None
+                        self._phase = self._last_phase
+                    else:
+                        self._send_message('Continuing with the defensive inside deployment going on for ' + str(self._defensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                        self._tactic = 'defensive'
+                        self._decide = None
+                        self._phase = self._last_phase
+    
                 else:
                     return None, {}
 
@@ -238,7 +320,7 @@ class brutus(custom_agent_brain):
                                       This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                       + image_name, 'Brutus')
                     self._decide = 'human'
-                    self._time = self._time_left - self._resistance
+                    self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
                     self._phase = Phase.LOCATE
 
@@ -248,9 +330,10 @@ class brutus(custom_agent_brain):
                                       This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                       + image_name, 'Brutus')
                     self._decide = 'Brutus'
-                    self._time = self._time_left - self._resistance
+                    self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
                     self._phase = Phase.LOCATE
+                    return Idle.__name__, {'duration_in_ticks':165}
 
             if Phase.LOCATE == self._phase:
                 if self._decide == 'human':
@@ -268,7 +351,7 @@ class brutus(custom_agent_brain):
                         return None, {}
                 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SENDING IN FIREFIGHTERS TO LOCATE FIRE SOURCE, FOR EXAMPLE WRT RESISTENCE TO COLLAPSE
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                if self._decide == 'Brutus':
                     if self._temperature_cat != 'higher' and self._resistance > 15:
                         self._send_message('Sending in fire fighters to help locate because the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes \
                                            and the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
@@ -426,9 +509,9 @@ class brutus(custom_agent_brain):
                                     image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
                                     distance = calculate_distances(self._fire_source_coords, self._victim_locations[vic]['location'])
                                     #distance = calculate_distances((2,8), self._victim_locations[vic]['location'])
-                                    if distance < 14:
+                                    if distance < 16:
                                         self._distance = 'small'
-                                    if distance >= 14:
+                                    if distance >= 16:
                                         self._distance = 'large'
                                     if self._temperature_cat == 'close' or self._temperature_cat == 'lower':
                                         temperature = 'lower'
@@ -455,7 +538,7 @@ class brutus(custom_agent_brain):
                                                         This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                         + image_name, 'Brutus')
                                         self._decide = 'Brutus'
-                                        self._time = self._time_left - self._resistance
+                                        self._plot_times.append(self._time_left - self._resistance)
                                         self._phase = Phase.RESCUE
                                         return Idle.__name__, {'duration_in_ticks': 25}
 
@@ -491,13 +574,16 @@ class brutus(custom_agent_brain):
                                                 This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                 + image_name, 'Brutus')
                                  self._decide = 'Brutus'
-                                 self._time = self._time_left - self._resistance
+                                 self._plot_times.append(self._time_left - self._resistance)
                                  self._phase = Phase.PRIORITY
                                  return Idle.__name__, {'duration_in_ticks': 25}
 
                 self._searched_rooms.append(self._door['room_name'])
-                self._phase=Phase.FIND_NEXT_GOAL
-                return Idle.__name__,{'duration_in_ticks':25}
+                self._phase = Phase.FIND_NEXT_GOAL
+                if self._phase == Phase.FIND_NEXT_GOAL:
+                    return Idle.__name__,{'duration_in_ticks':5}
+                if self._phase != Phase.FIND_NEXT_GOAL:
+                    return Idle.__name__,{'duration_in_ticks':165}
             
             if Phase.RESCUE == self._phase:
                 if self._decide == 'human':
@@ -528,10 +614,10 @@ class brutus(custom_agent_brain):
                         return None, {}
 
                 # ADD MORE CONDITIONS
-                if self._decide == 'Brutus' and self._time_left - self._resistance >= self._time + 1 and self._time_left - self._resistance <= self._time + 2: #increase to solve issues
-                    if self._temperature_cat != 'higher' and self._resistance > 15:
+                if self._decide == 'Brutus':
+                    if self._temperature_cat != 'higher' and self._resistance > 15 and 'Delivered' not in self.received_messages_content[-1]:
                         self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
-                                            and the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes.', 'Brutus')
+                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
                         vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
                         vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
                         drop_x = str(self._remaining[self._recent_victim][0])
@@ -542,14 +628,15 @@ class brutus(custom_agent_brain):
                         if self._door['room_name'] not in self._searched_rooms:
                             self._searched_rooms.append(self._door['room_name'])
                         return None, {}
+                    
+                    if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
+                        self._phase = Phase.FIND_NEXT_GOAL
+
                     else:
                         self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
                         self._collected_victims.append(self._recent_victim)
                         self._searched_rooms.append(self._door['room_name'])
                         self._phase = Phase.FIND_NEXT_GOAL
-                
-                if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1] and self._decide == 'Brutus':
-                    self._phase = Phase.FIND_NEXT_GOAL
    
                 else:
                     return None, {}
@@ -558,7 +645,7 @@ class brutus(custom_agent_brain):
                 if self._decide == 'human':
                     self._send_message('If you want to first extinguish the fire in office ' + self._door['room_name'].split()[-1] + ', press the "Extinguish" button. \
                                       If you want to first evacuate the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ', press the "Evacuate" button.', 'Brutus')
-                    if self.received_messages_content and self.received_messages_content[-1] == 'Extinguish':
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Extinguish' or self.received_messages_content and 'Extinguishing' in self.received_messages_content[-1] :
                         self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because you decided to.', 'Brutus')
                         for info in state.values():
                             if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
@@ -573,7 +660,7 @@ class brutus(custom_agent_brain):
                         return None, {}
                 
                 # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION
-                if self._decide == 'Brutus' and self._time_left - self._resistance == self._time + 1:
+                if self._decide == 'Brutus':
                     if self._location == '?' and self._smoke == 'fast':
                         self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is not located yet and the smoke is spreading fast.', 'Brutus')
                         self._phase = Phase.FIND_NEXT_GOAL

@@ -1,4 +1,4 @@
-import sys, random, enum, ast, time, threading, os, math
+import sys, random, enum, ast, time, threading, os, math, contextlib
 from rpy2 import robjects
     
 def R_to_Py_plot_priority(people, smoke, duration, location, image_name):
@@ -57,7 +57,9 @@ def R_to_Py_plot_priority(people, smoke, duration, location, image_name):
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                 ''')
-    robjects.r(r_script)
+    with open(os.devnull, 'w') as nullfile:
+        with contextlib.redirect_stdout(nullfile), contextlib.redirect_stderr(nullfile):
+            robjects.r(r_script)
     sensitivity = robjects.r['new_pred'][0]
     return round(sensitivity, 1)
 
@@ -118,7 +120,9 @@ def R_to_Py_plot_tactic(people, location, duration, resistance, image_name):
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                 ''')
-    robjects.r(r_script)
+    with open(os.devnull, 'w') as nullfile:
+        with contextlib.redirect_stdout(nullfile), contextlib.redirect_stderr(nullfile):
+            robjects.r(r_script)
     sensitivity = robjects.r['new_pred'][0]
     return round(sensitivity, 1)
 
@@ -184,7 +188,9 @@ def R_to_Py_plot_locate(people, duration, resistance, temperature, image_name):
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                 ''')
-    robjects.r(r_script)
+    with open(os.devnull, 'w') as nullfile:
+        with contextlib.redirect_stdout(nullfile), contextlib.redirect_stderr(nullfile):
+            robjects.r(r_script)
     sensitivity = robjects.r['new_pred'][0]
     return round(sensitivity, 1)
 
@@ -250,7 +256,9 @@ def R_to_Py_plot_rescue(duration, resistance, temperature, distance, image_name)
                 height_inches_web <- height_pixels / dpi_web
                 ggsave(filename="{image_name}", plot=pl, width=width_inches_web, height=height_inches_web, dpi=dpi_web)
                 ''')
-    robjects.r(r_script)
+    with open(os.devnull, 'w') as nullfile:
+        with contextlib.redirect_stdout(nullfile), contextlib.redirect_stderr(nullfile):
+            robjects.r(r_script)
     sensitivity = robjects.r['new_pred'][0]
     return round(sensitivity, 1)
     
