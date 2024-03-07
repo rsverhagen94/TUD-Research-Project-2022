@@ -131,15 +131,16 @@ class brutus(custom_agent_brain):
         for info in state.values():
             if 'class_inheritance' in info and 'AreaTile' in info['class_inheritance'] and info['location'] not in self._area_tiles:
                 self._area_tiles.append(info['location'])
-            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id'] and info['location'] not in self._fire_locations:
                 self._send_message('Found fire source!', 'Brutus')
+                self._fire_locations.append(info['location'])
                 self._location = 'found'
                 self._smoke = info['smoke']
                 if self._tactic == 'defensive':
                     self._phase = Phase.EXTINGUISH_CHECK
-            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and info['location'] not in self._fire_locations or \
-                'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id'] and info['location'] not in self._fire_locations:
+            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and info['location'] not in self._fire_locations:
                 self._send_message('Found fire in ' + self._current_room + '.', 'Brutus')
+                self._fire_locations.append(info['location'])
                 self._smoke = info['smoke']
                 if self._tactic == 'defensive':
                     self._phase = Phase.EXTINGUISH_CHECK
@@ -199,12 +200,12 @@ class brutus(custom_agent_brain):
             if self._current_location not in self._area_tiles and not self._plot_generated and self._situation != None and self._situation not in self._situations:
                 self._situations.append(self._situation)
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._resistance) + ".svg"
-                sensitivity = R_to_Py_plot_tactic(self._total_victims_cat, self._location_cat, self._duration, self._resistance, image_name)
-                sensitivity = 5
+                self._sensitivity = R_to_Py_plot_tactic(self._total_victims_cat, self._location_cat, self._duration, self._resistance, image_name)
+                #self._sensitivity = 5
                 self._plot_generated = True
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
 
-                if sensitivity >= 4.2:
+                if self._sensitivity >= 4.2:
                     if self._tactic == 'offensive':
                         self._send_message('My offensive deployment has been going on for ' + str(self._offensive_deployment_time) + ' minutes now. \
                                             We should decide whether to continue with the current offensive deployment, or switch to a defensive deployment. \
@@ -222,9 +223,11 @@ class brutus(custom_agent_brain):
                     self._decide = 'human'
                     self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
+                    self._time = int(self._second)
                     self._phase = Phase.TACTIC
+                    #return Idle.__name__, {'duration_in_ticks': 50} # 15 seconds
                 
-                if sensitivity < 4.2:
+                if self._sensitivity < 4.2:
                     if self._tactic == 'offensive':
                         self._send_message('My offensive deployment has been going on for ' + str(self._offensive_deployment_time) + ' minutes now. \
                                             We should decide whether to continue with the current offensive deployment, or switch to a defensive deployment. \
@@ -240,11 +243,12 @@ class brutus(custom_agent_brain):
                     self._decide = 'Brutus'
                     self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
+                    self._time = int(self._second)
                     self._phase = Phase.TACTIC
-                    return Idle.__name__, {'duration_in_ticks':165}
+                    #return Idle.__name__, {'duration_in_ticks': 50} # 15 seconds
 
             if Phase.TACTIC == self._phase:
-                if self._decide == 'human' and self._tactic == 'offensive':
+                if self._decide == 'human' and self._tactic == 'offensive' and int(self._second) >= self._time + 15:
                     self._send_message('If you want to continue with the offensive deployment going on for ' + str(self._deploy_time) + ' minutes now, press the "Continue" button. \
                                         If you want to switch to a defensive deployment, press the "Switch" button.', 'Brutus')
                     self._plot_times.append(self._time_left - self._resistance)
@@ -261,7 +265,7 @@ class brutus(custom_agent_brain):
                     else:
                         return None, {}
 
-                if self._decide == 'human' and self._tactic == 'defensive':
+                if self._decide == 'human' and self._tactic == 'defensive' and int(self._second) >= self._time + 15:
                     self._send_message('If you want to continue with the defensive deployment going on for ' + str(self._deploy_time) + ' minutes now, press the "Continue" button. \
                                         If you want to switch to an offensive deployment, press the "Switch" button.', 'Brutus')
                     self._plot_times.append(self._time_left - self._resistance)
@@ -278,35 +282,44 @@ class brutus(custom_agent_brain):
                     else:
                         return None, {}
 
-                # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SWITCHING TACTICS, FOR EXAMPLE WRT HOW DANGEROUS SITUATION IS (CHECK GUIDELINES)    
                 if self._decide == 'Brutus' and self._tactic == 'offensive':
-                    if self._resistance > 15 and self._duration < 45:
-                        self._send_message('Continuing with the offensive deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, because the fire duration is less than 45 minutes \
-                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
-                        self._plot_times.append(self._time_left - self._resistance)
-                        self._tactic = 'offensive'
-                        self._decide = None
-                        self._phase = self._last_phase
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Allocate to me' or self.received_messages_content and 'Allocating' in self.received_messages_content[-1]:
+                        self._send_message('Allocating this decision with a predicted moral sensitivity of ' + str(self._sensitivity) + ' to you because you intervened.', 'Brutus')
+                        self._decide = 'human'
                     else:
-                        self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._offensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
-                        self._plot_times.append(self._time_left - self._resistance)
-                        self._tactic = 'defensive'
-                        self._decide = None
-                        self._phase = self._last_phase
+                        if int(self._second) >= self._time + 15:
+                            if self._resistance > 15 and self._duration < 45:
+                                self._send_message('Continuing with the offensive deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, because the fire duration is less than 45 minutes \
+                                                    and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                                self._plot_times.append(self._time_left - self._resistance)
+                                self._tactic = 'offensive'
+                                self._decide = None
+                                self._phase = self._last_phase
+                            else:
+                                self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._offensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                                self._plot_times.append(self._time_left - self._resistance)
+                                self._tactic = 'defensive'
+                                self._decide = None
+                                self._phase = self._last_phase
 
                 if self._decide == 'Brutus' and self._tactic == 'defensive':
-                    if self._resistance > 15 and self._duration < 45:
-                        self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._defensive_deployment_time) + ' minutes, because the fire duration is less than 45 minutes \
-                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
-                        self._plot_times.append(self._time_left - self._resistance)
-                        self._tactic = 'offensive'
-                        self._decide = None
-                        self._phase = self._last_phase
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Allocate to me' or self.received_messages_content and 'Allocating' in self.received_messages_content[-1]:
+                        self._send_message('Allocating this decision with a predicted moral sensitivity of ' + str(self._sensitivity) + ' to you because you intervened.', 'Brutus')
+                        self._decide = 'human'
                     else:
-                        self._send_message('Continuing with the defensive deployment going on for ' + str(self._defensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
-                        self._tactic = 'defensive'
-                        self._decide = None
-                        self._phase = self._last_phase
+                        if int(self._second) >= self._time + 15:
+                            if self._resistance > 15 and self._duration < 45:
+                                self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._defensive_deployment_time) + ' minutes, because the fire duration is less than 45 minutes \
+                                                    and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                                self._plot_times.append(self._time_left - self._resistance)
+                                self._tactic = 'offensive'
+                                self._decide = None
+                                self._phase = self._last_phase
+                            else:
+                                self._send_message('Continuing with the defensive deployment going on for ' + str(self._defensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', 'Brutus')
+                                self._tactic = 'defensive'
+                                self._decide = None
+                                self._phase = self._last_phase
     
                 else:
                     return None, {}
@@ -315,11 +328,11 @@ class brutus(custom_agent_brain):
                 self._current_location not in self._area_tiles and 'locate' not in self._situations:
                 self._situations.append('locate')
                 image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_at_time_" + str(self._resistance) + ".svg"
-                sensitivity = R_to_Py_plot_locate(self._total_victims_cat, self._duration, self._resistance, self._temperature_cat, image_name)
-                sensitivity = 5
+                self._sensitivity = R_to_Py_plot_locate(self._total_victims_cat, self._duration, self._resistance, self._temperature_cat, image_name)
+                #self._sensitivity = 4
                 self._plot_generated = True
                 image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-                if sensitivity >= 4.2:
+                if self._sensitivity >= 4.2:
                     self._send_message('The location of the fire source still has not been found, so we should decide whether to send in fire fighters to help locate the fire source or if sending them in is too dangerous. \
                                       Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
                                       This is how much each feature contributed to the predicted sensitivity: \n \n ' \
@@ -327,9 +340,11 @@ class brutus(custom_agent_brain):
                     self._decide = 'human'
                     self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
+                    self._time = int(self._second)
                     self._phase = Phase.LOCATE
+                    #return Idle.__name__, {'duration_in_ticks': 50}
 
-                if sensitivity < 4.2:
+                if self._sensitivity < 4.2:
                     self._send_message('The location of the fire source still has not been found, so we should decide whether to send in fire fighters to help locate the fire source or if sending them in is too dangerous. \
                                       I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
                                       This is how much each feature contributed to the predicted sensitivity: \n \n ' \
@@ -337,11 +352,12 @@ class brutus(custom_agent_brain):
                     self._decide = 'Brutus'
                     self._plot_times.append(self._time_left - self._resistance)
                     self._last_phase = self._phase
+                    self._time = int(self._second)
                     self._phase = Phase.LOCATE
-                    return Idle.__name__, {'duration_in_ticks':165}
+                    #return Idle.__name__, {'duration_in_ticks': 50}
 
             if Phase.LOCATE == self._phase:
-                if self._decide == 'human':
+                if self._decide == 'human' and int(self._second) >= self._time + 15:
                     self._send_message('If you want to send in fire fighters to help locate the fire source, press the "Fire fighter" button. \
                                       If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
@@ -355,17 +371,21 @@ class brutus(custom_agent_brain):
                     else:
                         return None, {}
                 
-                # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION ABOUT SENDING IN FIREFIGHTERS TO LOCATE FIRE SOURCE, FOR EXAMPLE WRT RESISTENCE TO COLLAPSE
                 if self._decide == 'Brutus':
-                    if self._temperature_cat != 'higher' and self._resistance > 15:
-                        self._send_message('Sending in fire fighters to help locate because the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes \
-                                           and the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
-                        # replace by location obtained from world/task configuration
-                        self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
-                        self._phase = self._last_phase
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Allocate to me' or self.received_messages_content and 'Allocating' in self.received_messages_content[-1]:
+                        self._send_message('Allocating this decision with a predicted moral sensitivity of ' + str(self._sensitivity) + ' to you because you intervened.', 'Brutus')
+                        self._decide = 'human'
                     else:
-                        self._send_message('Not sending in fire fighters because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
-                        self._phase = self._last_phase
+                        if int(self._seconds) >= self._time + 15:
+                            if self._temperature_cat != 'higher' and self._resistance > 15:
+                                self._send_message('Sending in fire fighters to help locate because the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes \
+                                                and the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
+                                # replace by location obtained from world/task configuration
+                                self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
+                                self._phase = self._last_phase
+                            else:
+                                self._send_message('Not sending in fire fighters because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
+                                self._phase = self._last_phase
                 else:
                     return None, {}
                 
@@ -402,7 +422,7 @@ class brutus(custom_agent_brain):
                         self._goal_victim = vic
                         self._goal_location = remaining[vic]
                         self._phase = Phase.PLAN_PATH_TO_VICTIM
-                        return Idle.__name__, {'duration_in_ticks':25}              
+                        return Idle.__name__, {'duration_in_ticks': 0}              
                 self._phase = Phase.PICK_UNSEARCHED_ROOM
 
             if Phase.PICK_UNSEARCHED_ROOM == self._phase:
@@ -497,13 +517,6 @@ class brutus(custom_agent_brain):
                             if vic not in self._room_victims:
                                 self._room_victims.append(vic)
 
-                            if vic in self._found_victims and 'location' not in self._victim_locations[vic].keys():
-                                self._victim_locations[vic] = {'location': info['location'], 'room': self._door['room_name'], 'obj_id': info['obj_id']}
-                                if vic == self._goal_victim:
-                                    self._send_message('Found '+ vic + ' in ' + self._door['room_name'] + ' because you told me '+ vic + ' was located here.', 'Brutus')
-                                    self._searched_rooms.append(self._door['room_name'])
-                                    self._phase = Phase.FIND_NEXT_GOAL
-
                             if 'healthy' not in vic and vic not in self._found_victims:
                                 self._recent_victim = vic
                                 self._found_victims.append(vic)
@@ -522,21 +535,22 @@ class brutus(custom_agent_brain):
                                         temperature = 'lower'
                                     if self._temperature_cat == 'higher':
                                         temperature = 'higher'
-                                    sensitivity = R_to_Py_plot_rescue(self._duration, self._resistance, temperature, self._distance, image_name)
-                                    sensitivity = 5
+                                    self._sensitivity = R_to_Py_plot_rescue(self._duration, self._resistance, temperature, self._distance, image_name)
+                                    #self._sensitivity = 5
                                     self._plot_generated = True
                                     image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-                                    if sensitivity >= 4.2:
+                                    if self._sensitivity >= 4.2:
                                         self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
                                                         We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
                                                         Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
                                                         This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                         + image_name, 'Brutus')
                                         self._decide = 'human'
+                                        self._time = int(self._second)
                                         self._phase = Phase.RESCUE
-                                        return Idle.__name__, {'duration_in_ticks': 25}
+                                        return Idle.__name__, {'duration_in_ticks': 0}
 
-                                    if sensitivity < 4.2:
+                                    if self._sensitivity < 4.2:
                                         self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
                                                         We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
                                                         I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
@@ -544,8 +558,9 @@ class brutus(custom_agent_brain):
                                                         + image_name, 'Brutus')
                                         self._decide = 'Brutus'
                                         self._plot_times.append(self._time_left - self._resistance)
+                                        self._time = int(self._second)
                                         self._phase = Phase.RESCUE
-                                        return Idle.__name__, {'duration_in_ticks': 25}
+                                        return Idle.__name__, {'duration_in_ticks': 0}
 
                     return action, {}
 
@@ -558,21 +573,22 @@ class brutus(custom_agent_brain):
                     for vic in self._room_victims:
                         if 'mild' in self._recent_victim and not self._plot_generated:
                             image_name = "/home/ruben/xai4mhc/TUD-Research-Project-2022/custom_gui/static/images/sensitivity_plots/plot_for_vic_" + vic.replace(' ', '_') + ".svg"
-                            sensitivity = R_to_Py_plot_priority(len(self._room_victims), self._smoke, self._duration, self._location_cat, image_name)
-                            sensitivity = 5
+                            self._sensitivity = R_to_Py_plot_priority(len(self._room_victims), self._smoke, self._duration, self._location_cat, image_name)
+                            #self._sensitivity = 5
                             self._plot_generated = True
                             image_name = "<img src='/static/images" + image_name.split('/static/images')[-1] + "' />"
-                            if sensitivity >= 4.2:
+                            if self._sensitivity >= 4.2:
                                 self._send_message('I have found ' + str(len(self._room_victims)) + ' mildly injured ' + self._vic_string + ' in the burning office ' + self._door['room_name'].split()[-1] + '. \
                                                 We should decide whether to first extinguish the fire or evacuate the ' + self._vic_string + '. \
                                                 Please make this decision because the predicted moral sensitivity of this situation is above my allocation threshold. \
                                                 This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                 + image_name, 'Brutus')
                                 self._decide = 'human'
+                                self._time = int(self._second)
                                 self._phase = Phase.PRIORITY
-                                return Idle.__name__, {'duration_in_ticks': 25}
+                                return Idle.__name__, {'duration_in_ticks': 0}
 
-                            if sensitivity < 4.2:
+                            if self._sensitivity < 4.2:
                                  self._send_message('I have found ' + str(len(self._room_victims)) + ' mildly injured ' + self._vic_string + ' in the burning office ' + self._door['room_name'].split()[-1] + '. \
                                                 We should decide whether to first extinguish the fire or evacuate the ' + self._vic_string + '. \
                                                 I will make this decision because the predicted moral sensitivity of this situation is below my allocation threshold. \
@@ -580,18 +596,19 @@ class brutus(custom_agent_brain):
                                                 + image_name, 'Brutus')
                                  self._decide = 'Brutus'
                                  self._plot_times.append(self._time_left - self._resistance)
+                                 self._time = int(self._second)
                                  self._phase = Phase.PRIORITY
-                                 return Idle.__name__, {'duration_in_ticks': 25}
+                                 return Idle.__name__, {'duration_in_ticks': 0}
 
                 self._searched_rooms.append(self._door['room_name'])
                 self._phase = Phase.FIND_NEXT_GOAL
-                if self._phase == Phase.FIND_NEXT_GOAL:
-                    return Idle.__name__,{'duration_in_ticks':5}
-                if self._phase != Phase.FIND_NEXT_GOAL:
-                    return Idle.__name__,{'duration_in_ticks':165}
+                #if self._phase == Phase.FIND_NEXT_GOAL:
+                #    return Idle.__name__,{'duration_in_ticks': 20}
+                #if self._phase != Phase.FIND_NEXT_GOAL:
+                #    return Idle.__name__,{'duration_in_ticks': 50}
             
             if Phase.RESCUE == self._phase:
-                if self._decide == 'human':
+                if self._decide == 'human' and int(self._second) >= self._time + 15:
                     self._send_message('If you want to send in fire fighters to rescue ' + self._recent_victim + ', press the "Fire fighter" button. \
                                       If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
@@ -618,36 +635,39 @@ class brutus(custom_agent_brain):
                     else:
                         return None, {}
 
-                # ADD MORE CONDITIONS
                 if self._decide == 'Brutus':
-                    if self._temperature_cat != 'higher' and self._resistance > 15 and 'Delivered' not in self.received_messages_content[-1]:
-                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
-                                            and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
-                        vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
-                        vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
-                        drop_x = str(self._remaining[self._recent_victim][0])
-                        drop_y = str(self._remaining[self._recent_victim][1])
-                        self._send_message('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
-                        if self._recent_victim not in self._collected_victims:
-                            self._collected_victims.append(self._recent_victim)
-                        if self._door['room_name'] not in self._searched_rooms:
-                            self._searched_rooms.append(self._door['room_name'])
-                        return None, {}
-                    
-                    if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
-                        self._phase = Phase.FIND_NEXT_GOAL
-
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Allocate to me' or self.received_messages_content and 'Allocating' in self.received_messages_content[-1]:
+                        self._send_message('Allocating this decision with a predicted moral sensitivity of ' + str(self._sensitivity) + ' to you because you intervened.', 'Brutus')
+                        self._decide = 'human'
                     else:
-                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
-                        self._collected_victims.append(self._recent_victim)
-                        self._searched_rooms.append(self._door['room_name'])
-                        self._phase = Phase.FIND_NEXT_GOAL
+                        if int(self._second) >= self._time + 15:
+                            if self._temperature_cat != 'higher' and self._resistance > 15 and 'Delivered' not in self.received_messages_content[-1]:
+                                self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
+                                                    and the estimated fire resistance to collapse is more than 15 minutes.', 'Brutus')
+                                vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
+                                vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
+                                drop_x = str(self._remaining[self._recent_victim][0])
+                                drop_y = str(self._remaining[self._recent_victim][1])
+                                self._send_message('Coordinates vic ' + vic_x + ' and ' + vic_y + ' coordinates drop ' + drop_x + ' and ' + drop_y, 'Brutus')
+                                if self._recent_victim not in self._collected_victims:
+                                    self._collected_victims.append(self._recent_victim)
+                                if self._door['room_name'] not in self._searched_rooms:
+                                    self._searched_rooms.append(self._door['room_name'])
+                                return None, {}
+                            
+                            if self.received_messages_content and self._recent_victim in self.received_messages_content[-1] and 'Delivered' in self.received_messages_content[-1]:
+                                self._phase = Phase.FIND_NEXT_GOAL
+
+                            else:
+                                self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
+                                self._collected_victims.append(self._recent_victim)
+                                self._searched_rooms.append(self._door['room_name'])
+                                self._phase = Phase.FIND_NEXT_GOAL
    
-                else:
-                    return None, {}
+                        return None, {}
 
             if Phase.PRIORITY == self._phase:
-                if self._decide == 'human':
+                if self._decide == 'human' and int(self._second) >= 15:
                     self._send_message('If you want to first extinguish the fire in office ' + self._door['room_name'].split()[-1] + ', press the "Extinguish" button. \
                                       If you want to first evacuate the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ', press the "Evacuate" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Extinguish' or self.received_messages_content and 'Extinguishing' in self.received_messages_content[-1] :
@@ -661,24 +681,31 @@ class brutus(custom_agent_brain):
                         self._phase = Phase.FIND_NEXT_GOAL
                     if self._id and not state[{'obj_id': self._id}]:
                         self._phase = Phase.FIND_NEXT_GOAL
+                        return Idle.__name__, {'duration_in_ticks': 0}
                     else:
                         return None, {}
                 
-                # ADD MORE CONDITIONS FOR BRUTUS TO MAKE DECISION
                 if self._decide == 'Brutus':
-                    if self._location == '?' and self._smoke == 'fast':
-                        self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is not located yet and the smoke is spreading fast.', 'Brutus')
-                        self._phase = Phase.FIND_NEXT_GOAL
+                    if self.received_messages_content and self.received_messages_content[-1] == 'Allocate to me' or self.received_messages_content and 'Allocating' in self.received_messages_content[-1]:
+                        self._send_message('Allocating this decision with a predicted moral sensitivity of ' + str(self._sensitivity) + ' to you because you intervened.', 'Brutus')
+                        self._decide = 'human'
                     else:
-                        self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because these are the general guidelines.', 'Brutus')
-                        for info in state.values():
-                            if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
-                                self._id = info['obj_id']
-                                return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
-                if self._id and not state[{'obj_id': self._id}]:
-                    self._phase = Phase.FIND_NEXT_GOAL
-                else:
-                    return None, {}
+                        if int(self._second) >= self._time + 15:
+                            if self._location == '?' and self._smoke == 'fast':
+                                self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because the fire source is not located yet and the smoke is spreading fast.', 'Brutus')
+                                self._phase = Phase.FIND_NEXT_GOAL
+                            else:
+                                self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because these are the general guidelines.', 'Brutus')
+                                for info in state.values():
+                                    if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
+                                        self._id = info['obj_id']
+                                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
+
+                    if self._id and not state[{'obj_id': self._id}]:
+                        self._phase = Phase.FIND_NEXT_GOAL
+                        return Idle.__name__, {'duration_in_ticks': 0}
+                    else:
+                        return None, {}
                 
             if Phase.PLAN_PATH_TO_VICTIM == self._phase:
                 self._searched_rooms.append(self._door['room_name'])
