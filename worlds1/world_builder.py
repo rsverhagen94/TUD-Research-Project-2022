@@ -90,15 +90,15 @@ def create_builder(exp_version, condition, task):
 
     # Create the goal
     if exp_version == "experiment":
-        goal = CollectionGoal(max_nr_ticks=600)
+        goal = CollectionGoal(max_nr_ticks=1080)
     if exp_version == "trial":
         goal = CollectionGoal(max_nr_ticks=10000000000)
     # Create our world builder
     if exp_version=="experiment":
-        builder = WorldBuilder(shape=[26,25], tick_duration = 0.3, run_matrx_api=True,
+        builder = WorldBuilder(shape=[26,25], tick_duration = 0.5, run_matrx_api=True,
                            run_matrx_visualizer=False, verbose = False, simulation_goal=goal, visualization_bg_clr='#e5ddd5')
     else:
-        builder = WorldBuilder(shape=[19,19], tick_duration = 0.3, run_matrx_api=True,random_seed=random_seed,
+        builder = WorldBuilder(shape=[19,19], tick_duration = 0.5, run_matrx_api=True,random_seed=random_seed,
                            run_matrx_visualizer=False, verbose = False, simulation_goal=goal, visualization_bg_clr='#9a9083')
     if exp_version=="experiment":
         current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
@@ -110,20 +110,20 @@ def create_builder(exp_version, condition, task):
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour="#1F262A")
         # Create the rooms
         #builder.add_room(top_left_location=(0, 0), width=25, height=24, name="world_bounds", wall_visualize_colour='#e5ddd5')
-        builder.add_room(top_left_location=(0,0), width=5, height=4, name='area 1', door_locations=[(2,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0, door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,4)})
-        builder.add_room(top_left_location=(7,0), width=5, height=4, name='area 2', door_locations=[(9,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,4)})
-        builder.add_room(top_left_location=(14,0), width=5, height=4, name='area 3', door_locations=[(16,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,4)})
-        builder.add_room(top_left_location=(21,0), width=5, height=4, name='area 4', door_locations=[(23,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,4)})
-        builder.add_room(top_left_location=(0,7), width=5, height=4, name='area 5', door_locations=[(2,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,6)})
-        builder.add_room(top_left_location=(7,7), width=5, height=4, name='area 6', door_locations=[(9,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,6)})
-        builder.add_room(top_left_location=(14,7), width=5, height=4, name='area 7', door_locations=[(16,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,6)})
-        builder.add_room(top_left_location=(0,14), width=5, height=4, name='area 8', door_locations=[(2,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,18)})
-        builder.add_room(top_left_location=(7,14), width=5, height=4, name='area 9', door_locations=[(9,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,18)})
-        builder.add_room(top_left_location=(14,14), width=5, height=4, name='area 10', door_locations=[(16,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,18)})
-        builder.add_room(top_left_location=(0,21), width=5, height=4, name='area 11', door_locations=[(2,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,20)})
-        builder.add_room(top_left_location=(7,21), width=5, height=4, name='area 12', door_locations=[(9,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,20)})
-        builder.add_room(top_left_location=(14,21), width=5, height=4, name='area 13', door_locations=[(16,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,20)})
-        builder.add_room(top_left_location=(21,21), width=5, height=4, name='area 14', door_locations=[(23,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,20)})
+        builder.add_room(top_left_location=(0,0), width=5, height=4, name='office 1', door_locations=[(2,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0, door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,4)})
+        builder.add_room(top_left_location=(7,0), width=5, height=4, name='office 2', door_locations=[(9,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,4)})
+        builder.add_room(top_left_location=(14,0), width=5, height=4, name='office 3', door_locations=[(16,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,4)})
+        builder.add_room(top_left_location=(21,0), width=5, height=4, name='office 4', door_locations=[(23,3)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,4)})
+        builder.add_room(top_left_location=(0,7), width=5, height=4, name='office 5', door_locations=[(2,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,6)})
+        builder.add_room(top_left_location=(7,7), width=5, height=4, name='office 6', door_locations=[(9,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,6)})
+        builder.add_room(top_left_location=(14,7), width=5, height=4, name='office 7', door_locations=[(16,7)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,6)})
+        builder.add_room(top_left_location=(0,14), width=5, height=4, name='office 8', door_locations=[(2,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,18)})
+        builder.add_room(top_left_location=(7,14), width=5, height=4, name='office 9', door_locations=[(9,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,18)})
+        builder.add_room(top_left_location=(14,14), width=5, height=4, name='office 10', door_locations=[(16,17)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,18)})
+        builder.add_room(top_left_location=(0,21), width=5, height=4, name='office 11', door_locations=[(2,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(2,20)})
+        builder.add_room(top_left_location=(7,21), width=5, height=4, name='office 12', door_locations=[(9,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(9,20)})
+        builder.add_room(top_left_location=(14,21), width=5, height=4, name='office 13', door_locations=[(16,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(16,20)})
+        builder.add_room(top_left_location=(21,21), width=5, height=4, name='office 14', door_locations=[(23,21)],doors_open=True, wall_visualize_colour="#8a8a8a", with_area_tiles=True, area_visualize_colour='#0008ff',area_visualize_opacity=0.0,door_open_colour='#e5ddd5', area_custom_properties={'doormat':(23,20)})
 
 
         for loc in [(25,3),(25,2),(25,1),(25,0), (25,21),(25,22),(25,23)]:
@@ -151,12 +151,12 @@ def create_builder(exp_version, condition, task):
         for loc in [(25,24)]:
             builder.add_object(loc,'roof', EnvObject,is_traversable=True, is_movable=False, visualize_shape='img',img_name="/images/wall_bottom_right.png")
 
-        builder.add_object((2,8), 'source',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
+        builder.add_object((2,8), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
         builder.add_object(location=(2,7),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25)
         for i in [(2,6),(1,6),(0,6),(3,6),(3,5),(3,4),(2,5),(2,4),(1,5),(1,4),(0,5),(0,4),(4,6),(4,5),(4,4)]:
             builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75)
 
-        builder.add_object((16,22), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
+        builder.add_object((16,22), 'source',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
         builder.add_object(location=(16,21),name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.25)
         for i in [(16,19),(15,19),(14,19),(17,19),(17,18),(17,20),(16,18),(16,20),(15,18),(15,20),(14,18),(14,20),(18,19),(18,18),(18,20)]:
             builder.add_object(location=i,name='smog',callable_class=SmokeObject,visualize_shape='img',img_name="/images/smoke.svg",visualize_size=1.75)        
@@ -164,24 +164,24 @@ def create_builder(exp_version, condition, task):
         builder.add_object((16,1), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
         builder.add_object((9,15), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True) 
         builder.add_object((2,3),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((9,1), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='fast', is_traversable=True, is_movable=True)
+        builder.add_object((23,1), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='fast', is_traversable=True, is_movable=True)
         builder.add_object((23,3),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
         builder.add_object((9,7),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
         builder.add_object((16,7),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
         builder.add_object((2,21),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
         builder.add_object((9,21),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=100, is_traversable=False, is_movable=True)
-        builder.add_object((9,22), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='fast', is_traversable=True, is_movable=True)
+        builder.add_object((9,22), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=3, smoke='fast', is_traversable=True, is_movable=True)
         builder.add_object((9,17),'iron',IronObject,visualize_shape='img',img_name="/images/girder.svg",visualize_size=1, weight=125, is_traversable=False, is_movable=True)
         builder.add_object((16,15), 'fire',FireObject,visualize_shape='img',img_name="/images/fire2.svg", visualize_size=2, smoke='fast', is_traversable=True, is_movable=True)          
 
         builder.add_object((3,2),'critically injured woman in area 1', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured woman.svg")
-        builder.add_object((8,1),'mildly injured elderly man in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly man.svg")
+        builder.add_object((22,1),'mildly injured elderly man in area 4', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly man.svg")
         builder.add_object((1,22),'critically injured elderly man in area 11', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly man.svg")
         builder.add_object((3,16),'critically injured man in area 8', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured man.svg")
         builder.add_object((15,15),'mildly injured woman in area 10', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured woman.svg")
-        builder.add_object((10,23),'mildly injured elderly woman in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
-        builder.add_object((8,22),'mildly injured man in area 12', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured man.svg")
-        builder.add_object((24,23),'critically injured elderly woman in area 14', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly woman.svg")
+        builder.add_object((24,1),'mildly injured elderly woman in area 4', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured elderly woman.svg")
+        builder.add_object((22,2),'mildly injured man in area 4', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/mildly injured man.svg")
+        builder.add_object((8,1),'critically injured elderly woman in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly woman.svg")
         
 
         builder.add_object((25,9),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured woman.svg",drop_zone_nr=0)
