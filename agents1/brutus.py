@@ -60,6 +60,7 @@ class brutus(custom_agent_brain):
         self._room_tiles = []
         self._situations = []
         self._plot_times = []
+        self._potential_source_offices = []
         self._situation = None
         self._victim_locations = {}
         self._current_door = None
@@ -90,6 +91,8 @@ class brutus(custom_agent_brain):
         load_R_to_Py()
 
     def filter_bw4t_observations(self, state):
+        self._office_doors = {(2, 3): '1', (9, 3): '2', (16, 3): '3', (23, 3): '4', (2, 7): '5', (9, 7): '6', (16, 7): '7',
+                              (2, 17): '8', (9, 17): '9', (16, 17): '10', (2, 21): '11', (9, 21): '12', (16, 21): '13', (23, 21): '14'}
         self._second = state['World']['tick_duration'] * state['World']['nr_ticks']
         if int(self._second) % 6 == 0 and int(self._second) not in self._modulos:
             self._modulos.append(int(self._second))
@@ -130,25 +133,24 @@ class brutus(custom_agent_brain):
                 self._smoke = info['smoke']
                 if self._tactic == 'defensive':
                     self._phase = Phase.EXTINGUISH_CHECK
+            if 'class_inheritance' in info and 'SmokeObject' in info['class_inheritance'] and 'smog' in info['obj_id']:
+                if info['location'] in self._office_doors.keys() and info['location'] not in self._potential_source_offices:
+                    self._potential_source_offices.append(info['location'])
 
         if self._location == 'found':
             for info in state.values():
                 if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name']:
                     self._fire_source_coords = info['location']
 
-        if self.received_messages_content and self.received_messages_content[-1] == 'Found fire source!':
-            self._send_message('Fire source located and pinned on the map.', 'Brutus')
-            # replace with location determined by world builder
-            action_kwargs = add_object([(16,22)], "/images/fire2.svg", 3, 1, 'fire source')
+        if self.received_messages_content and self.received_messages_content[-1] == 'Fire source located and pinned on the map.':
             self._location = 'found' 
-            return AddObject.__name__, action_kwargs
 
         if self._location == '?':
             self._location_cat = 'unknown'
         if self._location == 'found':
             self._location_cat = 'known'
 
-        if self._time_left - self._resistance not in self._plot_times: #replace by list keeping track of all times where plots are send
+        if self._time_left - self._resistance not in self._plot_times: 
             self._plot_generated = False
 
         if len(self._extinguished_fire_locations) < 4 and self._duration >= 45:
@@ -167,7 +169,7 @@ class brutus(custom_agent_brain):
                     if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id'] and self._tactic == 'defensive' or \
                         'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id'] and self._tactic == 'defensive':
                         #self._fire_locations.append(info['location'])
-                        self._send_message('Extinguishing fire in ' + self._current_room + '...', 'Brutus')
+                        self._send_message('Extinguishing fire in ' + self._current_room + '.', 'Brutus')
                         if info['location'] not in self._extinguished_fire_locations:
                             self._extinguished_fire_locations.append(info['location'])
                         return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 10}
@@ -306,12 +308,12 @@ class brutus(custom_agent_brain):
                                         If you want to switch to a defensive deployment, press the "Switch" button.', 'Brutus')
                     self._plot_times.append(self._time_left - self._resistance)
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Continuing with the offensive deployment that has been going on for ' + str(self._deploy_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Continuing with the offensive deployment that has been going on for ' + str(self._deploy_time) + ' minutes.', 'Brutus')
                         self._tactic = 'offensive'
                         self._decide = None
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
-                        self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._deploy_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._deploy_time) + ' minutes.', 'Brutus')
                         #self._offensive_deployment_time = 0
                         self._tactic = 'defensive'
                         self._decide = None
@@ -324,12 +326,12 @@ class brutus(custom_agent_brain):
                                         If you want to switch to an offensive deployment, press the "Switch" button.', 'Brutus')
                     self._plot_times.append(self._time_left - self._resistance)
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Continuing with the defensive deployment that has been going on for ' + str(self._deploy_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Continuing with the defensive deployment that has been going on for ' + str(self._deploy_time) + ' minutes.', 'Brutus')
                         self._tactic = 'defensive'
                         self._decide = None
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Switch':
-                        self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._deploy_time) + ' minutes, because you decided to.', 'Brutus')
+                        self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._deploy_time) + ' minutes.', 'Brutus')
                         #self._defensive_deployment_time = 0
                         self._tactic = 'offensive'
                         self._decide = None
@@ -445,12 +447,13 @@ class brutus(custom_agent_brain):
                     self._send_message('If you want to send in fire fighters to help locate the fire source, press the "Fire fighter" button. \
                                       If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Not sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
+                        self._send_message('Not sending in fire fighters to help locate the fire source.', 'Brutus')
                         self._phase = self._last_phase
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
-                        self._send_message('Sending in fire fighters to help locate the fire source because you decided to.', 'Brutus')
-                        # replace by location obtained from world/task configuration
-                        self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
+                        self._send_message('Sending in fire fighters to help locate the fire source.', 'Brutus')
+                        self._send_message('Target 1 is ' + str(self._potential_source_offices[0][0]) + ' and ' + str(self._potential_source_offices[0][1]) + ' in ' \
+                                            + self._office_doors[self._potential_source_offices[0]] + ' target 2 is ' + str(self._potential_source_offices[-1][0]) + ' and ' \
+                                            + str(self._potential_source_offices[-1][1]) + ' in ' +  self._office_doors[self._potential_source_offices[-1]], 'Brutus')
                         self._phase = self._last_phase
                     else:
                         return None, {}
@@ -464,8 +467,9 @@ class brutus(custom_agent_brain):
                             if self._temperature_cat != 'higher' and self._resistance > 15:
                                 self._send_message('Sending in fire fighters to help locate because the estimated fire resistance to collapse (' + str(self._resistance) + ' minutes) is more than 15 minutes \
                                                 and the temperate is lower than the auto-ignition temperatures of present substances.', 'Brutus')
-                                # replace by location obtained from world/task configuration
-                                self._send_message('Target 1 is 2 and 7 in 5 target 2 is 16 and 21 in 13', 'Brutus')
+                                self._send_message('Target 1 is ' + str(self._potential_source_offices[0][0]) + ' and ' + str(self._potential_source_offices[0][1]) + ' in ' \
+                                                    + self._office_doors[self._potential_source_offices[0]] + ' target 2 is ' + str(self._potential_source_offices[-1][0]) + ' and ' \
+                                                    + str(self._potential_source_offices[-1][1]) + ' in ' +  self._office_doors[self._potential_source_offices[-1]], 'Brutus')
                                 self._phase = self._last_phase
                             else:
                                 self._send_message('Not sending in fire fighters because the conditions are not safe enough for fire fighters to enter.', 'Brutus')
@@ -585,7 +589,7 @@ class brutus(custom_agent_brain):
                 for info in state.values():
                     if 'class_inheritance' in info and 'IronObject' in info['class_inheritance'] and 'iron' in info['obj_id'] and info not in objects:
                         objects.append(info)
-                        self._send_message('Iron debris is blocking ' + str(self._door['room_name']) + '. Removing iron debris ...', 'Brutus')
+                        self._send_message('Iron debris is blocking ' + str(self._door['room_name']) + '. Removing iron debris.', 'Brutus')
                         return RemoveObject.__name__, {'object_id': info['obj_id'], 'duration_in_ticks': 10}
 
                 if len(objects) == 0:
@@ -806,7 +810,7 @@ class brutus(custom_agent_brain):
                     self._send_message('If you want to send in fire fighters to rescue ' + self._recent_victim + ', press the "Fire fighter" button. \
                                       If you do not want to send them in, press the "Continue" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
-                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because you decided to.', 'Brutus')
+                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + '.', 'Brutus')
                         vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
                         vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
                         drop_x = str(self._remaining[self._recent_victim][0])
@@ -822,7 +826,7 @@ class brutus(custom_agent_brain):
                         self._phase = Phase.FIND_NEXT_GOAL
 
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because you decided to.', 'Brutus')
+                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + '.', 'Brutus')
                         self._lost_victims.append(self._recent_victim)
                         self._searched_rooms_offensive.append(self._door['room_name'])
                         self._phase = Phase.FIND_NEXT_GOAL
@@ -867,7 +871,7 @@ class brutus(custom_agent_brain):
                     self._send_message('If you want to first extinguish the fire in office ' + self._door['room_name'].split()[-1] + ', press the "Extinguish" button. \
                                       If you want to first evacuate the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ', press the "Evacuate" button.', 'Brutus')
                     if self.received_messages_content and self.received_messages_content[-1] == 'Extinguish' or self.received_messages_content and 'Extinguishing' in self.received_messages_content[-1] :
-                        self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first because you decided to.', 'Brutus')
+                        self._send_message('Extinguishing the fire in office ' + self._door['room_name'].split()[-1] + ' first.', 'Brutus')
                         for info in state.values():
                             if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'fire' in info['obj_id']:
                                 self._id = info['obj_id']
@@ -875,7 +879,7 @@ class brutus(custom_agent_brain):
                                     self._extinguished_fire_locations.append(info['location'])
                                 return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
                     if self.received_messages_content and self.received_messages_content[-1] == 'Evacuate':
-                        self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first because you decided to.', 'Brutus')
+                        self._send_message('Evacuating the ' + self._vic_string + ' in office ' + self._door['room_name'].split()[-1] + ' first.', 'Brutus')
                         self._phase = Phase.FIND_NEXT_GOAL
                     if self._id and not state[{'obj_id': self._id}]:
                         self._phase = Phase.FIND_NEXT_GOAL

@@ -1,6 +1,7 @@
 import sys, random, enum, ast, time
 from matrx import grid_world
 from brains1.custom_agent_brain import custom_agent_brain
+from utils1.util_functions import *
 from actions1.custom_actions import *
 from matrx import utils
 from matrx.grid_world import GridWorld
@@ -85,9 +86,9 @@ class firefighter(custom_agent_brain):
 
             if Phase.PLAN_ROOM_SEARCH_PATH == self._phase:
                 if agent_name and agent_name == 'fire_fighter_2':
-                    area = 'area ' + self._msg.split()[7]
+                    area = 'office ' + self._msg.split()[7]
                 if agent_name and agent_name == 'fire_fighter_3':
-                    area = 'area ' + self._msg.split()[-1]
+                    area = 'office ' + self._msg.split()[-1]
                 room_tiles = [info['location'] for info in state.values()
                     if 'class_inheritance' in info 
                     and 'AreaTile' in info['class_inheritance']
@@ -104,8 +105,11 @@ class firefighter(custom_agent_brain):
                 if action != None:                   
                     for info in state.values():
                         if 'class_inheritance' in info and 'FireObject' in info['class_inheritance'] and 'source' in info['obj_id']:
-                            self._send_message('Found fire source!', agent_name.replace('_', ' ').capitalize())
+                            self._send_message('Fire source located and pinned on the map.', agent_name.replace('_', ' ').capitalize())
                             self._location = 'found'
+                            action_kwargs = add_object([info['location']], "/images/fire2.svg", 3, 1, 'fire source')
+                            self._phase = Phase.PLAN_EXIT
+                            return AddObject.__name__, action_kwargs
                     return action, {}
                 self._phase = Phase.PLAN_EXIT
 
