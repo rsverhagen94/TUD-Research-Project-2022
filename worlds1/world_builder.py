@@ -38,7 +38,7 @@ key_action_map = {
 
 def add_drop_off_zones(builder, exp_version):
     if exp_version == "experiment":
-        builder.add_area((25,9), width=1, height=8, name="Drop off 1", visualize_opacity=0.5, visualize_colour="#1F262A", drop_zone_nr=1,
+        builder.add_area((25,9), width=1, height=8, name="Drop off 1", visualize_opacity=0, visualize_colour="#e5ddd5", drop_zone_nr=1,
                 is_drop_zone=True, is_goal_block=False, is_collectable=False) 
     if exp_version == "trial":
         builder.add_area((17,7), width=1, height=4, name="Drop off 1", visualize_opacity=0.5, visualize_colour="#1F262A", drop_zone_nr=1,
@@ -54,11 +54,11 @@ def add_agents(builder, condition, exp_version):
 
     team_name = "Team 1"
     
-    if exp_version=="experiment" and condition=="baseline":
-        brain = brutus()
-        brain2 = firefighter()
-        brain3 = firefighter()
-        brain4 = firefighter()
+    if exp_version=="experiment":
+        brain = brutus(condition=condition)
+        brain2 = firefighter(condition=condition)
+        brain3 = firefighter(condition=condition)
+        brain4 = firefighter(condition=condition)
 
     if exp_version=="experiment":
         loc = (24,12)
@@ -184,14 +184,14 @@ def create_builder(exp_version, condition, task):
         builder.add_object((8,1),'critically injured elderly woman in area 2', callable_class=CollectableBlock, visualize_shape='img',img_name="/images/critically injured elderly woman.svg")
         
 
-        builder.add_object((25,9),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured woman.svg",drop_zone_nr=0)
-        builder.add_object((25,10),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured elderly woman.svg",drop_zone_nr=0)
-        builder.add_object((25,11),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured man.svg",drop_zone_nr=0)
-        builder.add_object((25,12),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured elderly man.svg",drop_zone_nr=0)
-        builder.add_object((25,13),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured man.svg",drop_zone_nr=0)
-        builder.add_object((25,14),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured elderly man.svg",drop_zone_nr=0)
-        builder.add_object((25,15),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured woman.svg",drop_zone_nr=0)
-        builder.add_object((25,16),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured elderly woman.svg",drop_zone_nr=0)
+        builder.add_object((25,9),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured woman.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,10),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured elderly woman.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,11),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured man.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,12),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/critically injured elderly man.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,13),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured man.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,14),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured elderly man.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,15),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured woman.svg",drop_zone_nr=0, visualize_opacity = 0.5)
+        builder.add_object((25,16),name="Collect Block", callable_class=GhostBlock,visualize_shape='img',img_name="/images/mildly injured elderly woman.svg",drop_zone_nr=0, visualize_opacity = 0.5)
 
         builder.add_object(location=[2,0], is_traversable=True, is_movable=False, name="area 01 sign", img_name="/images/sign01.svg", visualize_depth=110, visualize_size=0.5)
         builder.add_object(location=[9,0], is_traversable=True, is_movable=False, name="area 02 sign", img_name="/images/sign02.svg", visualize_depth=110, visualize_size=0.55)
@@ -242,11 +242,11 @@ class SmokeObject(EnvObject):
                          is_drop_zone=False, is_goal_block=False, is_collectable=False)
 
 class GhostBlock(EnvObject):
-    def __init__(self, location, drop_zone_nr, name, visualize_shape, img_name):
+    def __init__(self, location, drop_zone_nr, name, visualize_shape, img_name, visualize_opacity):
         super().__init__(location, name, is_traversable=True, is_movable=False,
-                         visualize_shape=visualize_shape, img_name=img_name,
+                         visualize_shape=visualize_shape, img_name=img_name, visualize_opacity=visualize_opacity, 
                          visualize_size=0.9, class_callable=GhostBlock,
-                         visualize_depth=110, drop_zone_nr=drop_zone_nr, visualize_opacity=0.5,
+                         visualize_depth=110, drop_zone_nr=drop_zone_nr,
                          is_drop_zone=False, is_goal_block=True, is_collectable=False)
 
 

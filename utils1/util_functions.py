@@ -63,7 +63,6 @@ def R_to_Py_plot_priority(people, smoke, duration, location, image_name):
                         legend.text = element_text(size = 12),
                         legend.position = "none",
                         legend.title = element_text(size = 12, face = "plain")) +
-                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
                 labs(y = "Relative feature contribution", fill = "") +
                 scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
                 scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
@@ -146,7 +145,6 @@ def R_to_Py_plot_tactic(people, location, duration, resistance, image_name):
                         legend.text = element_text(size = 12),
                         legend.position = "none",
                         legend.title = element_text(size = 12, face = "plain")) +
-                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
                 labs(y = "Relative feature contribution", fill = "") +
                 scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
                 scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
@@ -234,7 +232,6 @@ def R_to_Py_plot_locate(people, duration, resistance, temperature, image_name):
                         legend.text = element_text(size = 12),
                         legend.position = "none",
                         legend.title = element_text(size = 12, face = "plain")) +
-                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
                 labs(y = "Relative feature contribution", fill = "") +
                 scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
                 scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
@@ -322,7 +319,6 @@ def R_to_Py_plot_rescue(duration, resistance, temperature, distance, image_name)
                         legend.text = element_text(size = 12),
                         legend.position = "none",
                         legend.title = element_text(size = 12, face = "plain")) +
-                ggtitle(paste("Predicted sensitivity = ", round(new_pred, 1))) +
                 labs(y = "Relative feature contribution", fill = "") +
                 scale_y_continuous(breaks = seq(-1, 1, by = 0.5), limits = c(-1, 1), expand = c(0.0, 0.0)) +
                 scale_fill_manual(values = c("positive" = "#3E6F9F", "negative" = "#B0D7F0"), breaks = c("positive", "negative")) +
