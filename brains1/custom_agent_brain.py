@@ -9,7 +9,7 @@ class custom_agent_brain(agent_brain, ABC):
     BW4T agents must implement decide_on_bw4t_action
     """
     
-    def __init__(self, condition):
+    def __init__(self, name, condition):
         '''
         @param slowdown an integer. Basically this sets action_duration
         field to the given slowdown. 1 implies normal speed
@@ -18,6 +18,7 @@ class custom_agent_brain(agent_brain, ABC):
         This is to ensure that agents run at the required speed.
         FIXME this is hacky. These parameters should really be private.
         '''
+        self.__name = name
         self.__condition = condition
         super().__init__()
     

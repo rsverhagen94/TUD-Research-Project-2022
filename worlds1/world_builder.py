@@ -15,7 +15,7 @@ from matrx.objects import EnvObject
 from matrx.world_builder import RandomProperty
 from matrx.goals import WorldGoal
 from agents1.firefighter import firefighter
-from agents1.brutus import brutus
+from agents1.robot import robot
 from actions1.custom_actions import RemoveObjectTogether
 from brains1.custom_human_brain import custom_human_brain
 from loggers.action_logger import action_logger
@@ -44,7 +44,7 @@ def add_drop_off_zones(builder, exp_version):
         builder.add_area((17,7), width=1, height=4, name="Drop off 1", visualize_opacity=0.5, visualize_colour="#1F262A", drop_zone_nr=1,
                 is_drop_zone=True, is_goal_block=False, is_collectable=False) 
             
-def add_agents(builder, condition, exp_version):
+def add_agents(builder, name, condition, exp_version):
     sense_capability = SenseCapability({AgentBody: np.inf,
                                         CollectableBlock: 1,
                                         None: np.inf,
@@ -55,24 +55,20 @@ def add_agents(builder, condition, exp_version):
     team_name = "Team 1"
     
     if exp_version=="experiment":
-        brain = brutus(condition=condition)
-        brain2 = firefighter(condition=condition)
-        brain3 = firefighter(condition=condition)
-        brain4 = firefighter(condition=condition)
+        brain = robot(name=name, condition=condition)
+        brain2 = firefighter(name=name, condition=condition)
+        brain3 = firefighter(name=name, condition=condition)
+        brain4 = firefighter(name=name, condition=condition)
 
     if exp_version=="experiment":
         loc = (24,12)
     else:
         loc = (16,8)
 
-    builder.add_agent(loc, brain, team=team_name, name="Brutus",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                        sense_capability=sense_capability, is_traversable=True, img_name="/images/robot-final4.svg", visualize_when_busy=True)
-    builder.add_agent((24,14), brain2, team=team_name, name="fire fighter 1",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-    builder.add_agent((0,13), brain3, team=team_name, name="fire fighter 3",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
-    builder.add_agent((0,11), brain4, team=team_name, name="fire fighter 2",customizable_properties = ['score','followed','ignored'], score=0,followed=0,ignored=0,
-                        sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    builder.add_agent(loc, brain, team=team_name, name=name, sense_capability=sense_capability, is_traversable=True, img_name="/images/final-titus.svg", visualize_when_busy=True, visualize_size = 1.1)
+    builder.add_agent((24,14), brain2, team=team_name, name="fire fighter 1", sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    builder.add_agent((0,13), brain3, team=team_name, name="fire fighter 3", sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
+    builder.add_agent((0,11), brain4, team=team_name, name="fire fighter 2", sense_capability=sense_capability, is_traversable=True, img_name="/images/rescue-man-final3.svg", visualize_when_busy=True, visualize_opacity=0)
 
     # Add human agents
     brain = custom_human_brain(max_carry_objects=1, grab_range=1, drop_range=0, remove_range=1, fov_occlusion=True)
@@ -84,7 +80,7 @@ def add_agents(builder, condition, exp_version):
                             key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, visualize_colour='#e5ddd5', visualize_when_busy=False)
                             #key_action_map=key_action_map, sense_capability=sense_capability, is_traversable=True, visualize_shape=1, img_name="/images/rescue-man-final3.svg", visualize_when_busy=False)
 
-def create_builder(exp_version, condition, task):
+def create_builder(exp_version, name, condition, task):
     # Set numpy's random generator
     np.random.seed(random_seed)
 
@@ -209,7 +205,7 @@ def create_builder(exp_version, condition, task):
         builder.add_object(location=[23,24], is_traversable=True, is_movable=False, name="area 14 sign", img_name="/images/sign14.svg", visualize_depth=110, visualize_size=0.55)
     
     add_drop_off_zones(builder, exp_version)
-    add_agents(builder, condition, exp_version)
+    add_agents(builder, name, condition, exp_version)
 
     return builder
 
@@ -414,8 +410,6 @@ class CollectionGoal(WorldGoal):
                 zone_satisfied = False
             # update our satisfied boolean
             is_satisfied = is_satisfied and zone_satisfied
-        agent = grid_world.registered_agents['brutus']
-        agent.change_property('score',self.__score)
 
         return is_satisfied, progress
 

@@ -16,13 +16,15 @@ if __name__ == "__main__":
     else:
         print("\nEnter one of the conditions 'baseline', 'shap', or 'util':")
         choice2=input()
+        print("\nEnter one of the robot versions 'Brutus' or 'Titus':")
+        choice3=input()
         if choice2=='shap' or choice2=='util' or choice2=='baseline':
             start_scenario = None
             media_folder = pathlib.Path().resolve()
             print("Starting custom visualizer")
             vis_thread = visualization_server.run_matrx_visualizer(verbose=False, media_folder=media_folder)
             for level in range(1):
-                builder = create_builder(exp_version='experiment', condition=choice2, task=level)
+                builder = create_builder(exp_version='experiment', name=choice3, condition=choice2, task=level)
                 builder.startup(media_folder=media_folder)
                 print("Started world...")
                 world = builder.get_world()

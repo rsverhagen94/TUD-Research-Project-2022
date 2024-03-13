@@ -32,10 +32,11 @@ class Phase(enum.Enum):
 
 
 class firefighter(custom_agent_brain):
-    def __init__(self, condition):
-        super().__init__(condition)
+    def __init__(self, name, condition):
+        super().__init__(name, condition)
         self._phase = Phase.WAIT_FOR_CALL
-        self.__condition = condition
+        self._name = name
+        self._condition = condition
         self._send_messages = []
         self._rescued = []
         self._goal_victim = None
