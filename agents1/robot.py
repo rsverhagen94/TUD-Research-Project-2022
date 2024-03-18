@@ -42,11 +42,17 @@ class Phase(enum.Enum):
 
     
 class robot(custom_agent_brain):
-    def __init__(self, name, condition):
-        super().__init__(name, condition)
+    def __init__(self, name, condition, resistance, duration, no_fires, victims, task):
+        super().__init__(name, condition, resistance, duration, no_fires, victims, task)
         self._phase=Phase.INTRO
         self._name = name
         self._condition = condition
+        self._resistance = resistance
+        self._duration = duration
+        self._time_left = resistance
+        self._no_fires = no_fires
+        self._victims = victims
+        self._task = task
         self._room_victims = []
         self._searched_rooms = []
         self._searched_rooms_defensive = []
@@ -72,15 +78,10 @@ class robot(custom_agent_brain):
         self._fire_source_coords = None
         self._current_location = None
         self._plot_generated = False
-        self._time_left = 91
         self._smoke = '?'
-        self._temperature = '<≈'
-        self._temperature_cat = 'close'
         self._location = '?'
         self._distance = '?'
         self._tactic = 'offensive'
-        self._resistance = 91
-        self._duration = 14
         self._offensive_deployment_time = 0
         self._defensive_deployment_time = 0
         self._offensive_search_rounds = 0
@@ -109,10 +110,6 @@ class robot(custom_agent_brain):
 
     def decide_on_bw4t_action(self, state:State):
         print(self._phase)
-        self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
-        self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
-        self._send_message('Location: ' + self._location + '.', 'RescueBot')
-        self._send_message('Distance: ' + self._distance + '.', 'RescueBot')
 
         self._current_location = state[self.agent_id]['location']
 
@@ -161,15 +158,44 @@ class robot(custom_agent_brain):
         if self._time_left - self._resistance not in self._plot_times: 
             self._plot_generated = False
 
-        if len(self._extinguished_fire_locations) < 4 and self._duration >= 45:
-            self._temperature = '>'
-            self._temperature_cat = 'higher'
-        if len(self._extinguished_fire_locations) >= 6:
-            self._temperature = '<'
-            self._temperature_cat = 'lower'
-        if len(self._extinguished_fire_locations) < 6 and len(self._extinguished_fire_locations) > 3 or len(self._extinguished_fire_locations) < 4 and self._duration < 45:
-            self._temperature = '<≈'
-            self._temperature_cat = 'close'
+        if self._no_fires == 7:
+            if len(self._extinguished_fire_locations) / self._no_fires <= 0.45 and self._duration >= 45:
+                self._temperature = '>'
+                self._temperature_cat = 'higher'
+            if len(self._extinguished_fire_locations) / self._no_fires >= 0.8:
+                self._temperature = '<'
+                self._temperature_cat = 'lower'
+            if len(self._extinguished_fire_locations) / self._no_fires < 0.8 and len(self._extinguished_fire_locations) / self._no_fires > 0.45 or \
+                len(self._extinguished_fire_locations) / self._no_fires <= 0.45 and self._duration < 45:
+                self._temperature = '<≈'
+                self._temperature_cat = 'close'
+        if self._no_fires == 5:
+            if len(self._extinguished_fire_locations) / self._no_fires <= 0.4 and self._duration >= 45:
+                self._temperature = '>'
+                self._temperature_cat = 'higher'
+            if len(self._extinguished_fire_locations) / self._no_fires >= 0.8:
+                self._temperature = '<'
+                self._temperature_cat = 'lower'
+            if len(self._extinguished_fire_locations) / self._no_fires < 0.8 and len(self._extinguished_fire_locations) / self._no_fires > 0.4 or \
+                len(self._extinguished_fire_locations) / self._no_fires <= 0.4 and self._duration < 45:
+                self._temperature = '<≈'
+                self._temperature_cat = 'close'
+        if self._no_fires == 3:
+            if len(self._extinguished_fire_locations) / self._no_fires == 0 and self._duration >= 45:
+                self._temperature = '>'
+                self._temperature_cat = 'higher'
+            if len(self._extinguished_fire_locations) / self._no_fires >= 0.65:
+                self._temperature = '<'
+                self._temperature_cat = 'lower'
+            if len(self._extinguished_fire_locations) / self._no_fires < 0.65 and len(self._extinguished_fire_locations) / self._no_fires > 0 or \
+                len(self._extinguished_fire_locations) / self._no_fires == 0 and self._duration < 45:
+                self._temperature = '<≈'
+                self._temperature_cat = 'close'
+
+        self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
+        self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
+        self._send_message('Location: ' + self._location + '.', 'RescueBot')
+        self._send_message('Distance: ' + self._distance + '.', 'RescueBot')
 
         while True:
             if Phase.EXTINGUISH_CHECK == self._phase:
@@ -180,7 +206,7 @@ class robot(custom_agent_brain):
                         self._send_message('Extinguishing fire in ' + self._current_room + '.', self._name)
                         if info['location'] not in self._extinguished_fire_locations:
                             self._extinguished_fire_locations.append(info['location'])
-                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 500, 'duration_in_ticks': 10}
+                        return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 10}
                     if 'class_inheritance' in info and 'EnvObject' in info['class_inheritance'] and 'fire source' in info['name'] and self._tactic == 'defensive' and calculate_distances(self._current_location, info['location']) <= 3:
                         return RemoveObject.__name__, {'object_id': info['obj_id'], 'remove_range': 5, 'duration_in_ticks': 0}
                 self._searched_rooms_defensive.append(self._current_room)
@@ -196,14 +222,17 @@ class robot(custom_agent_brain):
             if self._time_left - self._resistance >= 20 and self._time_left - self._resistance <= 25:
                 self._situation = 'switch 1'
 
-            if self._time_left - self._resistance >= 40 and self._time_left - self._resistance <= 45:
+            if self._time_left - self._resistance >= 35 and self._time_left - self._resistance <= 40:
                 self._situation = 'switch 2'
 
-            if self._time_left - self._resistance >= 60 and self._time_left - self._resistance <= 65:
+            if self._time_left - self._resistance >= 50 and self._time_left - self._resistance <= 55:
                 self._situation = 'switch 3'
 
-            if self._time_left - self._resistance >= 80 and self._time_left - self._resistance <= 85:
+            if self._time_left - self._resistance >= 65 and self._time_left - self._resistance <= 70:
                 self._situation = 'switch 4'
+
+            if self._time_left - self._resistance >= 80 and self._time_left - self._resistance <= 85:
+                self._situation = 'switch 5'
 
             if self._current_location not in self._room_tiles and not self._plot_generated and self._situation != None and self._situation not in self._situations:
                 self._situations.append(self._situation)
@@ -352,18 +381,19 @@ class robot(custom_agent_brain):
                         self._decide = 'human'
                     else:
                         if int(self._second) >= self._time + 15:
-                            if self._resistance > 15 and self._duration < 45:
-                                self._send_message('Continuing with the offensive deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, because the fire duration is less than 45 minutes \
-                                                    and the estimated fire resistance to collapse is more than 15 minutes.', self._name)
-                                self._plot_times.append(self._time_left - self._resistance)
-                                self._tactic = 'offensive'
-                                self._decide = None
-                                self._phase = self._last_phase
-                            else:
-                                self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._offensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', self._name)
+                            if self._resistance < 15 and self._duration > 60:
+                                self._send_message('Switching to a defensive deployment after the offensive deployment of ' + str(self._offensive_deployment_time) + ' minutes, because the fire duration is more than 60 minutes \
+                                                   and the estimated fire resistance to collapse is less than 15 minutes, making the chance of saving people and the building too low.', self._name)
                                 #self._offensive_deployment_time = 0
                                 self._plot_times.append(self._time_left - self._resistance)
                                 self._tactic = 'defensive'
+                                self._decide = None
+                                self._phase = self._last_phase
+                            else:
+                                self._send_message('Continuing with the offensive deployment going on for ' + str(self._offensive_deployment_time) + ' minutes now, because there is still chance to save people and the building.', self._name)
+                                #self._offensive_deployment_time = 0
+                                self._plot_times.append(self._time_left - self._resistance)
+                                self._tactic = 'offensive'
                                 self._decide = None
                                 self._phase = self._last_phase
                         else:
@@ -375,17 +405,17 @@ class robot(custom_agent_brain):
                         self._decide = 'human'
                     else:
                         if int(self._second) >= self._time + 15:
-                            if self._resistance > 15 and self._duration < 45:
-                                self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._defensive_deployment_time) + ' minutes, because the fire duration is less than 45 minutes \
-                                                    and the estimated fire resistance to collapse is more than 15 minutes.', self._name)
-                                #self._defensive_deployment_time = 0
-                                self._plot_times.append(self._time_left - self._resistance)
-                                self._tactic = 'offensive'
+                            if self._resistance < 15 and self._duration > 60:
+                                self._send_message('Continuing with the defensive deployment going on for ' + str(self._defensive_deployment_time) + ' minutes, because the fire duration is more than 60 minutes \
+                                                   and the estimated fire resistance to collapse is less than 15 minutes, making the chance of saving people and the building too low.', self._name)
+                                self._tactic = 'defensive'
                                 self._decide = None
                                 self._phase = self._last_phase
                             else:
-                                self._send_message('Continuing with the defensive deployment going on for ' + str(self._defensive_deployment_time) + ' minutes, because the chance of saving people and the building is too low.', self._name)
-                                self._tactic = 'defensive'
+                                self._send_message('Switching to an offensive deployment after the defensive deployment of ' + str(self._defensive_deployment_time) + ' minutes, because there is still chance to save people and the building.', self._name)
+                                #self._defensive_deployment_time = 0
+                                self._plot_times.append(self._time_left - self._resistance)
+                                self._tactic = 'offensive'
                                 self._decide = None
                                 self._phase = self._last_phase
                         else:
@@ -508,15 +538,17 @@ class robot(custom_agent_brain):
                     self._remaining = remaining
                 if not remaining_zones:
                     return None,{}
-                self._total_victims = len(remaining_victims) + len(self._rescued_victims)
-                if self._total_victims == 0:
-                    self._total_victims_cat = 'none'
-                if self._total_victims == 1:
-                    self._total_victims_cat = 'one'
-                if self._total_victims == 'unknown':
+                if self._victims == 'known':
+                    self._total_victims = len(remaining_victims) + len(self._rescued_victims)
+                    if self._total_victims == 0:
+                        self._total_victims_cat = 'none'
+                    if self._total_victims == 1:
+                        self._total_victims_cat = 'one'
+                    if self._total_victims > 1:
+                        self._total_victims_cat = 'multiple'
+                if self._victims == 'unknown':
+                    self._total_victims = '?'
                     self._total_victims_cat = 'unclear'
-                if self._total_victims > 1:
-                    self._total_victims_cat = 'multiple'
                 self._send_message('Victims rescued: ' + str(len(self._rescued_victims)) + '/' + str(self._total_victims) + '.', 'RescueBot')
                 for vic in remaining_victims:
                     if vic in self._found_victims and vic not in self._lost_victims:

@@ -9,7 +9,7 @@ class custom_agent_brain(agent_brain, ABC):
     BW4T agents must implement decide_on_bw4t_action
     """
     
-    def __init__(self, name, condition):
+    def __init__(self, name, condition, resistance, duration, no_fires, victims, task):
         '''
         @param slowdown an integer. Basically this sets action_duration
         field to the given slowdown. 1 implies normal speed
@@ -20,6 +20,11 @@ class custom_agent_brain(agent_brain, ABC):
         '''
         self.__name = name
         self.__condition = condition
+        self.__resistance = resistance
+        self.__duration = duration
+        self.__no_fires = no_fires
+        self.__victims = victims
+        self.__task = task
         super().__init__()
     
     def decide_on_action(self, state:State):

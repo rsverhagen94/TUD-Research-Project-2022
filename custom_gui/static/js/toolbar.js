@@ -530,7 +530,7 @@ function add_message(chatroom_ID, mssg) {
             document.getElementById('resistance').innerHTML = newTime;
     
             // Assuming you have an <h6> element with id="fireResistance"
-            document.getElementById('resistance').innerHTML = `<img src='/static/images/fire_resistance_transparent.svg' width=50/> ${text} minutes`;
+            document.getElementById('resistance').innerHTML = `<img src='/static/images/fire_resistance_transparent.svg' width=50/> ${text} min.`;
         }
         resistance();
     }
@@ -542,7 +542,7 @@ function add_message(chatroom_ID, mssg) {
             document.getElementById('duration').innerHTML = newTime;
     
             // Assuming you have an <h6> element with id="fireResistance"
-            document.getElementById('duration').innerHTML = `<img src='/static/images/duration_transparent.svg' width=40/> ${text} minutes`;
+            document.getElementById('duration').innerHTML = `<img src='/static/images/duration_transparent.svg' width=40/> ${text} min.`;
         }
         duration();
     }

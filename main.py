@@ -1,4 +1,4 @@
-import os, requests
+import os, requests, random
 import sys
 import csv
 import glob
@@ -9,26 +9,34 @@ from utils1.util_functions import load_R_to_Py
 from pathlib import Path
 
 if __name__ == "__main__":
-    print("\nEnter one of the environments 'trial' or 'experiment':")
+    print("\nEnter the participant ID:")
     choice1=input()
-    if choice1=='trial':
+    print("\nEnter one of the environments 'trial' or 'experiment':")
+    choice2=input()
+    if choice2=='trial':
         builder = create_builder(exp_version='trial',condition='tutorial')
     else:
         print("\nEnter one of the conditions 'baseline', 'shap', or 'util':")
-        choice2=input()
-        print("\nEnter one of the robot versions 'Brutus' or 'Titus':")
         choice3=input()
-        if choice2=='shap' or choice2=='util' or choice2=='baseline':
+        if choice3=='shap' or choice3=='util' or choice3=='baseline':
             start_scenario = None
             media_folder = pathlib.Path().resolve()
             print("Starting custom visualizer")
             vis_thread = visualization_server.run_matrx_visualizer(verbose=False, media_folder=media_folder)
-            for level in range(1):
-                builder = create_builder(exp_version='experiment', name=choice3, condition=choice2, task=level)
+
+            robots = ['Brutus'] * 2 + ['Titus'] * 2
+            tasks = [1, 2, 5, 6]
+            random.shuffle(robots)
+            random.shuffle(tasks)
+            print(robots, tasks)
+
+            for i, robot in enumerate(robots, start=0):
+                print(f"\nTask {i+1}: The robot is {robot} and task version {tasks[i]}.\n")
+                builder = create_builder(id=choice1, exp_version='experiment', name=robot, condition=choice3, task=tasks[i])
                 builder.startup(media_folder=media_folder)
                 print("Started world...")
                 world = builder.get_world()
-                builder.api_info['matrx_paused'] = False
+                builder.api_info['matrx_paused'] = True
                 world.run(builder.api_info)
 
                 if choice1=="experiment":
@@ -93,3 +101,5 @@ if __name__ == "__main__":
             vis_thread.join()
         else:
             print("\nWrong condition name entered")
+
+    builder.stop()
