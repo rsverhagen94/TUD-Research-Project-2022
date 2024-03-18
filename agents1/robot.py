@@ -76,6 +76,7 @@ class robot(custom_agent_brain):
         self._goal_location = None
         self._id = None
         self._fire_source_coords = None
+        self._deploy_time = None
         self._current_location = None
         self._plot_generated = False
         self._smoke = '?'
@@ -104,8 +105,8 @@ class robot(custom_agent_brain):
                 self._offensive_deployment_time += 1
             if self._tactic == 'defensive':
                 self._defensive_deployment_time += 1
-        self._send_message('Time left: ' + str(self._resistance) + '.', 'RescueBot')
-        self._send_message('Fire duration: ' + str(self._duration) + '.', 'RescueBot')
+        self._send_message('Time left: ' + str(self._resistance) + '.', self._name)
+        self._send_message('Fire duration: ' + str(self._duration) + '.', self._name)
         return state
 
     def decide_on_bw4t_action(self, state:State):
@@ -192,10 +193,10 @@ class robot(custom_agent_brain):
                 self._temperature = '<≈'
                 self._temperature_cat = 'close'
 
-        self._send_message('Smoke spreads: ' + self._smoke + '.', 'RescueBot')
-        self._send_message('Temperature: ' + self._temperature + '.', 'RescueBot')
-        self._send_message('Location: ' + self._location + '.', 'RescueBot')
-        self._send_message('Distance: ' + self._distance + '.', 'RescueBot')
+        self._send_message('Smoke spreads: ' + self._smoke + '.', self._name)
+        self._send_message('Temperature: ' + self._temperature + '.', self._name)
+        self._send_message('Location: ' + self._location + '.', self._name)
+        self._send_message('Distance: ' + self._distance + '.', self._name)
 
         while True:
             if Phase.EXTINGUISH_CHECK == self._phase:
@@ -549,7 +550,7 @@ class robot(custom_agent_brain):
                 if self._victims == 'unknown':
                     self._total_victims = '?'
                     self._total_victims_cat = 'unclear'
-                self._send_message('Victims rescued: ' + str(len(self._rescued_victims)) + '/' + str(self._total_victims) + '.', 'RescueBot')
+                self._send_message('Victims rescued: ' + str(len(self._rescued_victims)) + '/' + str(self._total_victims) + '.', self._name)
                 for vic in remaining_victims:
                     if vic in self._found_victims and vic not in self._lost_victims:
                         self._goal_victim = vic
@@ -717,19 +718,19 @@ class robot(custom_agent_brain):
                                     if self._sensitivity > self._threshold:
                                         if self._condition == 'shap':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 Please make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is above my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                                 + image_name, self._name)
                                         if self._condition == 'util':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 Please make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is above my allocation threshold. These are the positive and negative consequences of both decision options: \n \n ' \
                                                                 + image_name, self._name)
                                         if self._condition == 'baseline':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 Please make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is above my allocation threshold.', self._name)
 
@@ -741,19 +742,19 @@ class robot(custom_agent_brain):
                                     if self._sensitivity <= self._threshold:
                                         if self._condition == 'shap':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 I will make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is below my allocation threshold. This is how much each feature contributed to the predicted sensitivity: \n \n ' \
                                                                 + image_name, self._name)
                                         if self._condition == 'util':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 I will make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is below my allocation threshold. These are the positive and negative consequences of both decision options: \n \n ' \
                                                                 + image_name, self._name)
                                         if self._condition == 'baseline':
                                             self._send_message('I have found ' + vic + ' who I cannot evacuate to safety myself. \
-                                                                We should decide whether to send in fire fighters to rescue this victim, or if sending them in is too dangerous. \
+                                                                We should decide whether to send in a fire fighter to rescue this victim, or if sending one in is too dangerous. \
                                                                 I will make this decision because the predicted moral sensitivity of this situation (<b>' + str(self._sensitivity) + '</b>) \
                                                                 is below my allocation threshold.', self._name)
                                         self._decide = self._name
@@ -850,10 +851,10 @@ class robot(custom_agent_brain):
             
             if Phase.RESCUE == self._phase:
                 if self._decide == 'human' and int(self._second) >= self._time + 15:
-                    self._send_message('If you want to send in fire fighters to rescue ' + self._recent_victim + ', press the "Fire fighter" button. \
-                                      If you do not want to send them in, press the "Continue" button.', self._name)
+                    self._send_message('If you want to send in a fire fighter to rescue ' + self._recent_victim + ', press the "Fire fighter" button. \
+                                      If you do not want to send one in, press the "Continue" button.', self._name)
                     if self.received_messages_content and self.received_messages_content[-1] == 'Fire fighter':
-                        self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + '.', self._name)
+                        self._send_message('Sending in fire fighter to rescue ' + self._recent_victim + '.', self._name)
                         vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
                         vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
                         drop_x = str(self._remaining[self._recent_victim][0])
@@ -869,7 +870,7 @@ class robot(custom_agent_brain):
                         self._phase = Phase.FIND_NEXT_GOAL
 
                     if self.received_messages_content and self.received_messages_content[-1] == 'Continue':
-                        self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + '.', self._name)
+                        self._send_message('Not sending in fire fighter to rescue ' + self._recent_victim + '.', self._name)
                         self._lost_victims.append(self._recent_victim)
                         self._searched_rooms_offensive.append(self._door['room_name'])
                         self._phase = Phase.FIND_NEXT_GOAL
@@ -883,7 +884,7 @@ class robot(custom_agent_brain):
                     else:
                         if int(self._second) >= self._time + 15:
                             if self._temperature_cat != 'higher' and self._resistance > 15 and 'Delivered' not in self.received_messages_content[-1]:
-                                self._send_message('Sending in fire fighters to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
+                                self._send_message('Sending in a fire fighter to rescue ' + self._recent_victim + ' because the temperature is lower than the auto-ignition temperatures of present substances \
                                                     and the estimated fire resistance to collapse is more than 15 minutes.', self._name)
                                 vic_x = str(self._victim_locations[self._recent_victim]['location'][0])
                                 vic_y = str(self._victim_locations[self._recent_victim]['location'][1])
@@ -900,7 +901,7 @@ class robot(custom_agent_brain):
                                 self._phase = Phase.FIND_NEXT_GOAL
 
                             else:
-                                self._send_message('Not sending in fire fighters to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', self._name)
+                                self._send_message('Not sending in a fire fighter to rescue ' + self._recent_victim + ' because the conditions are not safe enough for fire fighters to enter.', self._name)
                                 self._lost_victims.append(self._recent_victim)
                                 self._searched_rooms_offensive.append(self._door['room_name'])
                                 self._phase = Phase.FIND_NEXT_GOAL
