@@ -483,13 +483,13 @@ class CarryObject(Action):
             reg_ag.change_property("img_name", "/images/evacuate-woman-brutus.svg")
 
         if 'mild' in object_id and 'titus' in agent_id and 'elderly_man' in object_id:
-            reg_ag.change_property("img_name", "/images/evacuate-granddad-titus.svg")
+            reg_ag.change_property("img_name", "/images/evacuate-granddad-titus2.svg")
         if 'mild' in object_id and 'titus' in agent_id and 'elderly_woman' in object_id:
-            reg_ag.change_property("img_name", "/images/evacuate-grandma-titus.svg")
+            reg_ag.change_property("img_name", "/images/evacuate-grandma-titus2.svg")
         if 'mild' in object_id and 'titus' in agent_id and 'injured_man' in object_id:
-            reg_ag.change_property("img_name", "/images/evacuate-man-titus.svg")
+            reg_ag.change_property("img_name", "/images/evacuate-man-titus2.svg")
         if 'mild' in object_id and 'titus' in agent_id and 'injured_woman' in object_id:
-            reg_ag.change_property("img_name", "/images/evacuate-woman-titus.svg")
+            reg_ag.change_property("img_name", "/images/evacuate-woman-titus2.svg")
 
         if 'critical' in object_id and 'fire_fighter' in agent_id:
             reg_ag.change_property("img_name", "/images/carry-critical-human.svg")
@@ -690,7 +690,7 @@ class Drop(Action):
         if 'brutus' in agent_id:
             reg_ag.change_property("img_name", "/images/robot-final4.svg")
         if 'titus' in agent_id:
-            reg_ag.change_property("img_name", "/images/titus4.svg")
+            reg_ag.change_property("img_name", "/images/final-titus2.svg")
         if 'fire_fighter' in agent_id:
             reg_ag.change_property("img_name", "/images/rescue-man-final3.svg")
             reg_ag.change_property("visualize_opacity", 0)

@@ -623,7 +623,7 @@ function add_message(chatroom_ID, mssg) {
     }
 
     // add the message text to the message div
-    if (!mssg_content.includes("Our score is") && !mssg_content.includes("Time left:") && !mssg_content.includes("Fire duration:") && !mssg_content.includes("Victims rescued:") && !mssg_content.includes("Smoke spreads:") && !mssg_content.includes("Temperature:") && !mssg_content.includes("Distance:") && !mssg_content.includes("Location:") && !mssg_content.includes("Coordinates") && !mssg_content.includes("Target")) {
+    if (!mssg_content.includes("Counterbalancing condition") && !mssg_content.includes("Time left:") && !mssg_content.includes("Fire duration:") && !mssg_content.includes("Victims rescued:") && !mssg_content.includes("Smoke spreads:") && !mssg_content.includes("Temperature:") && !mssg_content.includes("Distance:") && !mssg_content.includes("Location:") && !mssg_content.includes("Coordinates") && !mssg_content.includes("Target")) {
     var content = document.createElement('span');
     content.className = "chat-content";
     content.innerHTML = mssg_content;
